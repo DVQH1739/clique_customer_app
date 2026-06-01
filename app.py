@@ -13,6 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+import config
 from clique.algorithm import CLIQUE, NOISE_LABEL
 from clique.utils import (
     FEATURE_DISPLAY_NAMES,
@@ -133,7 +134,7 @@ def render_dashboard(model: CLIQUE, scaler, profiles: dict) -> None:
 
     # Baseline comparison
     st.subheader("Baseline Comparison")
-    X_path = MODELS_DIR / "X_train_scaled.csv"
+    X_path = config.X_TRAIN_SCALED_CSV
     if X_path.exists():
         try:
             X = pd.read_csv(X_path).values
@@ -409,7 +410,7 @@ def main() -> None:
         st.stop()
 
     X_sample = None
-    x_path = MODELS_DIR / "X_train_scaled.csv"
+    x_path = config.X_TRAIN_SCALED_CSV
     if x_path.exists():
         try:
             X_sample = pd.read_csv(x_path).values

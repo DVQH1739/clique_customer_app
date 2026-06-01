@@ -6,6 +6,8 @@ __pycache__/
 .eggs/
 dist/
 build/
+
+# Virtual environments
 .venv/
 venv/
 env/
@@ -13,14 +15,14 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Models & data artifacts (regenerate via train_quick / notebook)
-models/*.pkl
-models/*.csv
-!models/.gitkeep
+# Large raw datasets (download separately; not version-controlled)
+*.xlsx
+*.xls
+*.zip
 
-# Dataset (large; download separately)
-data/*.xlsx
-data/*.zip
+# Model artifacts (regenerate via scripts/run_all.py)
+models/*.pkl
+!models/.gitkeep
 
 # IDE / OS
 .idea/
@@ -30,3 +32,6 @@ Thumbs.db
 
 # Streamlit
 .streamlit/secrets.toml
+
+# NOTE: processed CSVs (data/processed/, data/raw/*.csv) and results/ are
+# intentionally tracked as deliverables.

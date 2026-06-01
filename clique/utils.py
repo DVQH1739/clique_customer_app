@@ -13,15 +13,21 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering, DBSCAN, KMeans
-from sklearn.metrics import (
-    calinski_harabasz_score,
-    davies_bouldin_score,
-    silhouette_score,
-)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
 from clique.algorithm import CLIQUE
+from clique.metrics import (
+    compute_calinski_harabasz,
+    compute_davies_bouldin,
+    compute_silhouette,
+)
+
+__all_metrics__ = [
+    "compute_silhouette",
+    "compute_davies_bouldin",
+    "compute_calinski_harabasz",
+]
 
 # Single source of truth for feature columns
 FEATURE_NAMES: list[str] = [
@@ -54,47 +60,7 @@ LOG_TRANSFORM_COLS: list[str] = [
 ]
 
 MODEL_VERSION: str = "v1"
-
-
-def compute_silhouette(X: np.ndarray, labels: np.ndarray) -> float:
-    """Wrapper around sklearn silhouette_score; handles edge cases (< 2 clusters)."""
-    labels = np.asarray(labels)
-    unique = set(labels) - {-1}
-    if len(unique) < 2:
-        return float("nan")
-    mask = labels >= 0
-    if mask.sum() < 2:
-        return float("nan")
-    try:
-        return float(silhouette_score(X[mask], labels[mask]))
-    except Exception:
-        return float("nan")
-
-
-def compute_davies_bouldin(X: np.ndarray, labels: np.ndarray) -> float:
-    """Wrapper around sklearn davies_bouldin_score."""
-    labels = np.asarray(labels)
-    unique = set(labels) - {-1}
-    if len(unique) < 2:
-        return float("nan")
-    mask = labels >= 0
-    try:
-        return float(davies_bouldin_score(X[mask], labels[mask]))
-    except Exception:
-        return float("nan")
-
-
-def compute_calinski_harabasz(X: np.ndarray, labels: np.ndarray) -> float:
-    """Wrapper around sklearn calinski_harabasz_score."""
-    labels = np.asarray(labels)
-    unique = set(labels) - {-1}
-    if len(unique) < 2:
-        return float("nan")
-    mask = labels >= 0
-    try:
-        return float(calinski_harabasz_score(X[mask], labels[mask]))
-    except Exception:
-        return float("nan")
+RANDOM_STATE: int = 42
 
 
 def run_baseline_comparison(X: np.ndarray) -> pd.DataFrame:
@@ -103,9 +69,9 @@ def run_baseline_comparison(X: np.ndarray) -> pd.DataFrame:
     """
     rows: list[dict[str, Any]] = []
     configs = [
-        ("KMeans", {"n_clusters": 4}, KMeans(n_clusters=4, random_state=42, n_init=10)),
-        ("KMeans", {"n_clusters": 5}, KMeans(n_clusters=5, random_state=42, n_init=10)),
-        ("KMeans", {"n_clusters": 6}, KMeans(n_clusters=6, random_state=42, n_init=10)),
+        ("KMeans", {"n_clusters": 4}, KMeans(n_clusters=4, random_state=RANDOM_STATE, n_init=10)),
+        ("KMeans", {"n_clusters": 5}, KMeans(n_clusters=5, random_state=RANDOM_STATE, n_init=10)),
+        ("KMeans", {"n_clusters": 6}, KMeans(n_clusters=6, random_state=RANDOM_STATE, n_init=10)),
         ("DBSCAN", {"eps": 0.3, "min_samples": 5}, DBSCAN(eps=0.3, min_samples=5)),
         ("DBSCAN", {"eps": 0.5, "min_samples": 5}, DBSCAN(eps=0.5, min_samples=5)),
         (
@@ -223,9 +189,8 @@ def clean_data(
     df = df[df["CustomerID"].notna() & (df["CustomerID"] != "") & (df["CustomerID"] != "nan")]
     print(f"After dropping null CustomerID: {len(df)}")
 
-    # 2. Returns (Quantity <= 0) — keep for return_rate
-    returns_df = df[df["Quantity"] <= 0].copy()
-
+    # 2. Valid quantity and price (negatives/zeros are returns or data errors;
+    #    return behaviour is captured separately via cancellation invoices below)
     # 3. Valid quantity and price
     df = df[df["Quantity"] > 0]
     print(f"After dropping invalid Quantity: {len(df)}")

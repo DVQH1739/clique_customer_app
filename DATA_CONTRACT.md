@@ -43,21 +43,30 @@ Optional identifier column: `CustomerID` (string).
 | Pre-computed profile     | All 8 `FEATURE_NAMES` present      | `scaler.transform()` → `predict()`|
 | Raw transactions         | `InvoiceNo` / `Invoice` / `StockCode`| `clean` → `profiles` → `scale` → `predict()` |
 
-## Mock Test Files
+## Data Files
 
-| File                 | Purpose                                      |
-|----------------------|----------------------------------------------|
-| `data/test_clean.csv`     | 500 valid rows, values in [0, 1]        |
-| `data/test_corrupted.csv` | 200 rows with missing cols, strings, NaN |
+| File                              | Purpose                                            |
+|-----------------------------------|----------------------------------------------------|
+| `data/raw/customers_raw.csv`      | 600 natural-scale rows + `true_segment` ground truth |
+| `data/raw/customers_corrupted.csv`| 200 rows with missing cols, strings, NaN (error tests)|
+| `data/processed/X_train_scaled.csv` | Scaled train features in [0, 1]                  |
+| `data/processed/X_test_scaled.csv`  | Scaled test features in [0, 1]                   |
+| `data/processed/train_labels.csv`   | Row-aligned train ground-truth segments          |
+| `data/processed/test_labels.csv`    | Row-aligned test ground-truth segments           |
 
 ## Model Artifacts (`models/`)
 
-| File               | Contents                    |
-|--------------------|-----------------------------|
-| `clique_model.pkl` | Fitted `CLIQUE` instance    |
-| `scaler.pkl`       | Fitted `MinMaxScaler`       |
+| File               | Contents                     |
+|--------------------|------------------------------|
+| `clique_model.pkl` | Fitted `CLIQUE` instance     |
+| `scaler.pkl`       | Fitted `MinMaxScaler`        |
 | `profiles.pkl`     | Cluster mean vectors (scaled)|
 
-## Training Date / Version
+## Results (`results/`)
 
-Artifacts are versioned as `*_v1.pkl` and mirrored as unversioned `.pkl` for the Streamlit app.
+| Folder              | Contents                                          |
+|---------------------|---------------------------------------------------|
+| `results/metrics/`  | CSV metric tables (comparison, classification, grid)|
+| `results/figures/`  | PNG diagrams (confusion matrix, ROC, comparisons) |
+
+All paths are defined centrally in `config.py`.
