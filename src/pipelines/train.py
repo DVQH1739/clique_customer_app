@@ -57,7 +57,7 @@ def grid_search(X: np.ndarray, y: np.ndarray) -> pd.DataFrame:
                 else 0.0
             )
             sil = compute_silhouette(X, model.labels_)
-            sup = supervised_metrics(X, y, model.labels_)
+            sup = supervised_metrics(y, model.labels_)
             agree = clustering_agreement_metrics(y, model.labels_)
             rows.append(
                 {
@@ -70,7 +70,6 @@ def grid_search(X: np.ndarray, y: np.ndarray) -> pd.DataFrame:
                     "adjusted_rand": agree["adjusted_rand"],
                     "nmi": agree["nmi"],
                     "f1_macro": sup["f1_macro"],
-                    "roc_auc_ovr": sup["roc_auc_ovr"],
                 }
             )
     df = pd.DataFrame(rows)

@@ -17,8 +17,10 @@ RANDOM_STATE: int = 42
 DEFAULT_XI: int = 8
 DEFAULT_TAU: float = 0.05
 
-# --- Project root (this file lives at the project root) ---
-ROOT: Path = Path(__file__).resolve().parent
+# --- Project layout ---
+# config.py lives in src/, so the project root is one level up.
+SRC_DIR: Path = Path(__file__).resolve().parent
+ROOT: Path = SRC_DIR.parent
 
 # --- Data folders ---
 DATA_DIR: Path = ROOT / "data"

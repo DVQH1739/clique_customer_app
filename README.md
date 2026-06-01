@@ -4,33 +4,28 @@ Subspace clustering for customer profiles using the **CLIQUE** algorithm
 ([Agrawal et al., SIGMOD 1998](https://doi.org/10.1145/276304.276306)), with a
 reproducible ML pipeline, baseline comparison, and a Streamlit app.
 
-## Project structure
+## Project structure (4 folders)
 
 ```
 clique_customer_app/
-├── config.py                 # Central paths, FEATURE_NAMES, RANDOM_STATE=42
-├── app.py                    # Streamlit UI (4 pages)
-├── clique/                   # Core library
-│   ├── algorithm.py          # CLIQUE implementation
-│   ├── metrics.py            # Intrinsic + supervised (F1/ROC/AUC) metrics
-│   └── utils.py              # Data loading, cleaning, feature engineering, I/O
-├── pipelines/                # Reproducible pipeline stages
-│   ├── generate_data.py      # 1. Synthetic raw data (with ground-truth segments)
-│   ├── preprocess.py         # 2. Log-transform, split, MinMax scale
-│   ├── train.py              # 3. Grid search + fit + save model
-│   └── evaluate.py           # 4. Metrics (CSV) + figures (PNG)
-├── scripts/
-│   ├── run_all.py            # Orchestrates the full pipeline
-│   ├── verify_clique.py      # Smoke test
-│   └── push_to_github.ps1
-├── notebooks/training.ipynb  # EDA + orchestration
+├── README.md · requirements.txt · DATA_CONTRACT.md
+├── src/                      # ALL code
+│   ├── config.py             # Central paths, FEATURE_NAMES, RANDOM_STATE=42
+│   ├── app.py                # Streamlit UI (4 pages)
+│   ├── clique/               # Core library
+│   │   ├── algorithm.py      # CLIQUE implementation
+│   │   ├── metrics.py        # Intrinsic + supervised metrics
+│   │   └── utils.py          # Data loading, cleaning, feature engineering, I/O
+│   ├── pipelines/            # 1 generate · 2 preprocess · 3 train · 4 evaluate
+│   ├── scripts/              # run_all.py · verify_clique.py · push_to_github.ps1
+│   └── notebooks/            # training.ipynb (EDA + orchestration)
 ├── data/
 │   ├── raw/                  # Raw inputs (synthetic CSV; real .xlsx ignored by git)
 │   └── processed/            # Scaled features + label CSVs
 ├── models/                   # clique_model.pkl, scaler.pkl, profiles.pkl
 └── results/
-    ├── metrics/              # CSV: model_comparison, classification report, grid search
-    └── figures/              # PNG: confusion matrix, ROC, comparisons, subspace grids
+    ├── metrics/              # CSV: model_comparison, classification report, grid, coverage
+    └── figures/              # PNG: confusion matrix, metric comparison, heatmap, grids
 ```
 
 ## Quick start
@@ -40,29 +35,45 @@ cd clique_customer_app
 python -m pip install -r requirements.txt
 
 # Run the full reproducible pipeline (data -> preprocess -> train -> evaluate)
-python scripts/run_all.py
+python src/scripts/run_all.py
 
 # Launch the dashboard
-streamlit run app.py
+streamlit run src/app.py
 ```
 
-Individual stages can also be run directly, e.g. `python pipelines/train.py`.
+Individual stages can also be run directly, e.g. `python src/pipelines/train.py`.
 
 ## Metrics
 
-CLIQUE is unsupervised, so two metric families are reported (`clique/metrics.py`):
+CLIQUE is unsupervised, so two metric families are reported (`src/clique/metrics.py`):
 
 | Family | Metrics | Needs labels? |
 |--------|---------|---------------|
 | Intrinsic | silhouette, Davies-Bouldin, Calinski-Harabasz | No |
 | Agreement | Adjusted Rand, NMI, homogeneity, completeness, V-measure | Yes |
-| Classification | accuracy, precision/recall/F1 (macro & weighted), ROC-AUC (OvR) | Yes |
+| Classification | accuracy, precision/recall/F1 (macro & weighted) | Yes |
 
 Classification-style metrics require ground-truth labels, which only the
 **synthetic** dataset provides. Predicted clusters are mapped to segments by
-**majority vote**; ROC-AUC uses **nearest-centroid softmax** scores. Because
-majority-vote F1 rewards over-fragmentation, **model selection uses Adjusted Rand
-Index** (tie-broken by silhouette), not F1.
+**majority vote**. Because majority-vote F1 rewards over-fragmentation, **model
+selection uses Adjusted Rand Index** (tie-broken by silhouette), not F1.
+
+> ROC/AUC was intentionally removed: for a hard clustering it has no well-defined
+> score, and the centroid-based proxy produced a degenerate AUC of 1.0 for every
+> algorithm — misleading rather than informative.
+
+## Results summary (synthetic data)
+
+| Algorithm | ARI | F1-macro | Silhouette | Note |
+|-----------|----:|---------:|-----------:|------|
+| KMeans (k=4) | **0.87** | 1.00 | **0.39** | best overall |
+| Agglomerative (k=5) | 0.84 | 1.00 | 0.37 | strong |
+| CLIQUE (xi=8, tau=0.08) | 0.34 | 0.99 | -0.10 | recovers segments but over-fragments |
+| DBSCAN (eps=0.5) | 0.57 | 0.56 | 0.60 | merges two segments |
+
+CLIQUE separates segments well after alignment (F1≈0.99) but its subspace clusters
+over-fragment the space (low ARI/silhouette) — an honest, expected characteristic
+of the algorithm on globular RFM-style data.
 
 ## Reproducibility
 

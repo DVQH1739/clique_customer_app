@@ -148,18 +148,11 @@ def load_raw_data(filepath: str) -> pd.DataFrame:
     InvoiceNo, StockCode, Description, Quantity, InvoiceDate,
     UnitPrice, CustomerID, Country
     """
-    if filepath.endswith(".xlsx"):
-        df1 = pd.read_excel(
-            filepath,
-            sheet_name="Year 2009-2010",
-            dtype={"Customer ID": str},
-        )
-        df2 = pd.read_excel(
-            filepath,
-            sheet_name="Year 2010-2011",
-            dtype={"Customer ID": str},
-        )
-        df = pd.concat([df1, df2], ignore_index=True)
+    if filepath.endswith((".xlsx", ".xls")):
+        # Online Retail II has two year sheets; Online Retail I has one. Read every
+        # sheet and concatenate so both layouts work without manual configuration.
+        sheets = pd.read_excel(filepath, sheet_name=None, dtype={"Customer ID": str})
+        df = pd.concat(sheets.values(), ignore_index=True)
     else:
         df = pd.read_csv(filepath, encoding="latin-1", dtype={"CustomerID": str})
 
@@ -189,33 +182,32 @@ def clean_data(
     df = df[df["CustomerID"].notna() & (df["CustomerID"] != "") & (df["CustomerID"] != "nan")]
     print(f"After dropping null CustomerID: {len(df)}")
 
-    # 2. Valid quantity and price (negatives/zeros are returns or data errors;
-    #    return behaviour is captured separately via cancellation invoices below)
-    # 3. Valid quantity and price
-    df = df[df["Quantity"] > 0]
-    print(f"After dropping invalid Quantity: {len(df)}")
-    df = df[df["UnitPrice"] > 0]
-    print(f"After dropping invalid UnitPrice: {len(df)}")
+    # 2. Capture cancellations FIRST. Cancellation invoices start with 'C' and carry
+    #    negative quantity, so they must be separated before the Quantity > 0 filter
+    #    below removes them (otherwise return_rate would always be 0).
+    is_cancel = df["InvoiceNo"].astype(str).str.startswith("C")
+    cancellations_df = df[is_cancel].copy()
+    df = df[~is_cancel]
+    print(f"Cancellation invoices captured: {len(cancellations_df)}")
 
-    # 4. Duplicates
-    dup_cols = ["InvoiceNo", "StockCode", "Quantity", "UnitPrice"]
-    dup_cols = [c for c in dup_cols if c in df.columns]
+    # 3. Valid quantity and price (negatives/zeros are returns or data-entry errors)
+    df = df[df["Quantity"] > 0]
+    df = df[df["UnitPrice"] > 0]
+    print(f"After dropping invalid Quantity/UnitPrice: {len(df)}")
+
+    # 4. Exact duplicate line items
+    dup_cols = [c for c in ["InvoiceNo", "StockCode", "Quantity", "UnitPrice"] if c in df.columns]
     if dup_cols:
         df = df.drop_duplicates(subset=dup_cols)
 
-    # 5. Cancellations
-    cancellations_df = df[df["InvoiceNo"].astype(str).str.startswith("C")].copy()
-    df = df[~df["InvoiceNo"].astype(str).str.startswith("C")]
-    print(f"After dropping cancellations: {len(df)}")
-
-    # 6. InvoiceDate
+    # 5. Parse InvoiceDate
     df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"], errors="coerce")
     df = df[df["InvoiceDate"].notna()]
 
-    # 7. Revenue
+    # 6. Revenue
     df["Revenue"] = df["Quantity"] * df["UnitPrice"]
 
-    # 8. UK filter
+    # 7. UK filter (optional) to reduce noise
     if filter_uk and "Country" in df.columns:
         df = df[df["Country"] == "United Kingdom"]
 

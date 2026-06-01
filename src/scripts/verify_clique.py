@@ -33,5 +33,5 @@ row = evaluate_labeling(X, model.predict(X), y, "CLIQUE")
 sil = compute_silhouette(X, model.labels_)
 print(
     f"OK: {len(model.clusters_)} clusters, silhouette={sil:.3f}, "
-    f"f1_macro={row['f1_macro']:.3f}, roc_auc={row['roc_auc_ovr']:.3f}"
+    f"f1_macro={row['f1_macro']:.3f}, adjusted_rand={row['adjusted_rand']:.3f}"
 )

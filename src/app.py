@@ -28,9 +28,8 @@ from clique.utils import (
     validate_profile_csv,
 )
 
-APP_ROOT = Path(__file__).resolve().parent
-MODELS_DIR = APP_ROOT / "models"
-DATA_DIR = APP_ROOT / "data"
+MODELS_DIR = config.MODELS_DIR
+DATA_DIR = config.DATA_DIR
 
 MARKETING_TIPS: dict[int, str] = {
     0: "VIP retention: offer early access and loyalty rewards to protect high-value share.",

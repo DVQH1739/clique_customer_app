@@ -46,9 +46,9 @@ def run(test_size: float = 0.2) -> dict[str, object]:
     for col in config.LOG_TRANSFORM_COLS:
         profiles[col] = np.log1p(profiles[col].clip(lower=0))
 
-    X = profiles[config.FEATURE_NAMES].values.astype(float)
-    y = profiles["true_segment"].values.astype(int)
-    ids = profiles["CustomerID"].values
+    X = profiles[config.FEATURE_NAMES].to_numpy(dtype=float)
+    y = profiles["true_segment"].to_numpy(dtype=int)
+    ids = profiles["CustomerID"].astype(str).to_numpy(dtype=object)
 
     X_train, X_test, y_train, y_test, ids_train, ids_test = train_test_split(
         X, y, ids, test_size=test_size, random_state=config.RANDOM_STATE, stratify=y

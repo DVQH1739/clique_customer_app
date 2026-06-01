@@ -11,7 +11,6 @@ from clique.metrics import (
     evaluate_labeling,
     intrinsic_metrics,
     majority_vote_mapping,
-    roc_curve_data,
     supervised_metrics,
 )
 from clique.utils import (
@@ -45,7 +44,6 @@ __all__ = [
     "align_predictions",
     "majority_vote_mapping",
     "confusion_matrix_aligned",
-    "roc_curve_data",
     "load_model",
     "load_raw_data",
     "preprocess",

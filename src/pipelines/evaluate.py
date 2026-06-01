@@ -8,7 +8,7 @@ Writes metric tables (CSV) to ``results/metrics/`` and diagrams (PNG) to
 
 Metrics:
   - Intrinsic: silhouette, Davies-Bouldin, Calinski-Harabasz
-  - Supervised: accuracy, precision/recall/F1 (macro & weighted), ROC-AUC (OvR)
+  - Supervised: accuracy, precision/recall/F1 (macro & weighted)
   - Agreement: ARI, NMI, homogeneity, completeness, V-measure
 
 Run:
@@ -43,7 +43,6 @@ from clique.metrics import (
     align_predictions,
     confusion_matrix_aligned,
     evaluate_labeling,
-    roc_curve_data,
 )
 
 sns.set_theme(style="whitegrid")
@@ -89,9 +88,9 @@ def build_comparison(X: np.ndarray, y: np.ndarray, model: CLIQUE) -> pd.DataFram
 
     cols = [
         "algorithm", "params", "n_clusters", "noise_pct",
-        "accuracy", "precision_macro", "recall_macro", "f1_macro", "f1_weighted",
-        "roc_auc_ovr", "adjusted_rand", "nmi", "homogeneity", "completeness",
-        "v_measure", "silhouette", "davies_bouldin", "calinski_harabasz", "runtime_sec",
+        "accuracy", "f1_macro", "f1_weighted",
+        "adjusted_rand", "nmi", "homogeneity", "completeness", "v_measure",
+        "silhouette", "davies_bouldin", "calinski_harabasz", "runtime_sec",
     ]
     df = pd.DataFrame(rows)
     return df[[c for c in cols if c in df.columns]]
@@ -145,41 +144,23 @@ def plot_confusion(X: np.ndarray, y: np.ndarray, model: CLIQUE) -> None:
     plt.close()
 
 
-def plot_roc(X: np.ndarray, y: np.ndarray, model: CLIQUE) -> None:
-    data = roc_curve_data(X, y, model.predict(X))
-    plt.figure(figsize=(6, 5))
-    for c, d in data.items():
-        plt.plot(d["fpr"], d["tpr"], label=f"{config.SEGMENT_NAMES[c]} (AUC={d['auc']:.3f})")
-    plt.plot([0, 1], [0, 1], "k--", alpha=0.5)
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("CLIQUE ROC (one-vs-rest, nearest-centroid scores)")
-    plt.legend(loc="lower right")
+def plot_metric_comparison(comparison: pd.DataFrame) -> None:
+    """Single grouped bar chart of the key comparable metrics (all in [0, 1])."""
+    metrics = [m for m in ("adjusted_rand", "nmi", "f1_macro") if m in comparison.columns]
+    labels = [f"{a}\n{p}" for a, p in zip(comparison["algorithm"], comparison["params"])]
+    x = np.arange(len(comparison))
+    width = 0.8 / len(metrics)
+    plt.figure(figsize=(11, 5))
+    for i, metric in enumerate(metrics):
+        plt.bar(x + i * width, comparison[metric].fillna(0), width, label=metric)
+    plt.xticks(x + width * (len(metrics) - 1) / 2, labels, rotation=45, ha="right", fontsize=8)
+    plt.ylabel("score (higher is better)")
+    plt.ylim(0, 1.05)
+    plt.title("Clustering quality by algorithm (ARI / NMI / F1-macro)")
+    plt.legend()
     plt.tight_layout()
-    plt.savefig(config.FIGURES_DIR / "roc_clique.png", dpi=150)
+    plt.savefig(config.FIGURES_DIR / "metric_comparison.png", dpi=150)
     plt.close()
-
-
-def plot_metric_bars(comparison: pd.DataFrame) -> None:
-    for metric, fname, better in [
-        ("f1_macro", "f1_comparison.png", "higher"),
-        ("silhouette", "silhouette_comparison.png", "higher"),
-        ("roc_auc_ovr", "roc_auc_comparison.png", "higher"),
-    ]:
-        if metric not in comparison.columns:
-            continue
-        labels = comparison["algorithm"] + "\n" + comparison["params"]
-        plt.figure(figsize=(9, 5))
-        vals = comparison[metric].fillna(0)
-        bars = plt.bar(range(len(comparison)), vals, color="#1f77b4")
-        best_idx = int(vals.idxmax())
-        bars[best_idx].set_color("#2ca02c")
-        plt.xticks(range(len(comparison)), labels, rotation=45, ha="right", fontsize=8)
-        plt.ylabel(metric)
-        plt.title(f"{metric} by algorithm ({better} is better; best in green)")
-        plt.tight_layout()
-        plt.savefig(config.FIGURES_DIR / fname, dpi=150)
-        plt.close()
 
 
 def plot_subspace_heatmap(model: CLIQUE) -> None:
@@ -217,7 +198,7 @@ def plot_top_subspace_grids(X: np.ndarray, model: CLIQUE) -> None:
     twod.sort(key=lambda x: -x[1])
     colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
 
-    for subspace, _cov in twod[:3]:
+    for subspace, _cov in twod[:2]:
         dx, dy = subspace
         fig, ax = plt.subplots(figsize=(6.5, 6))
         ax.scatter(X[:, dx], X[:, dy], s=8, c="grey", alpha=0.4)
@@ -255,9 +236,17 @@ def plot_top_subspace_grids(X: np.ndarray, model: CLIQUE) -> None:
         plt.close()
 
 
+def _clear_figures() -> None:
+    """Delete previously generated PNGs so no stale figures linger."""
+    if config.FIGURES_DIR.exists():
+        for png in config.FIGURES_DIR.glob("*.png"):
+            png.unlink()
+
+
 def run() -> pd.DataFrame:
     """Run full evaluation and export all artifacts."""
     config.ensure_dirs()
+    _clear_figures()
     X, y, model = _load()
 
     comparison = build_comparison(X, y, model)
@@ -269,8 +258,7 @@ def run() -> pd.DataFrame:
     export_subspace_coverage(model)
 
     plot_confusion(X, y, model)
-    plot_roc(X, y, model)
-    plot_metric_bars(comparison)
+    plot_metric_comparison(comparison)
     plot_subspace_heatmap(model)
     plot_cluster_sizes(model)
     plot_top_subspace_grids(X, model)
