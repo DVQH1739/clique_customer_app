@@ -13,11 +13,17 @@ RANDOM_STATE: int = 42
 DEFAULT_XI: int = 8
 DEFAULT_TAU: float = 0.05
 
-XI_GRID: list[int] = [8, 10, 12]
-TAU_GRID: list[float] = [0.10, 0.12, 0.14, 0.16, 0.18]
+XI_GRID: list[int] = [8, 10, 12, 14, 16]
+TAU_GRID: list[float] = [0.06, 0.08, 0.10, 0.12, 0.14, 0.16, 0.18, 0.20]
 MIN_CLUSTERS: int = 4
 MAX_CLUSTERS: int = 10
-MIN_COVERAGE: float = 0.85
+MIN_COVERAGE: float = 0.60
+
+# CLIQUE stability knobs (improve high-dimensional subspace discovery)
+CLIQUE_DENSITY_DECAY: float = 0.78
+MIN_CLUSTER_SIZE_RATIO: float = 0.01
+REDUNDANT_OVERLAP_THRESHOLD: float = 0.92
+SELECTION_OBJECTIVE: str = "balanced"
 
 # --- Project layout ---
 SRC_DIR: Path = Path(__file__).resolve().parent
@@ -53,11 +59,14 @@ PROFILES_PKL: Path = MODELS_DIR / "profiles.pkl"
 
 # --- Results ---
 GRID_SEARCH_CSV: Path = METRICS_DIR / "retail_grid_search.csv"
+BEST_PARAMS_CSV: Path = METRICS_DIR / "best_params.csv"
 BASELINE_COMPARISON_CSV: Path = METRICS_DIR / "baseline_comparison.csv"
 BASELINE_COMPARISON_PNG: Path = FIGURES_DIR / "baseline_comparison.png"
 CLUSTER_DESCRIPTIONS_CSV: Path = METRICS_DIR / "cluster_descriptions.csv"
 TEST_PREDICTIONS_CSV: Path = METRICS_DIR / "test_predictions.csv"
 EDA_DISTRIBUTIONS_PNG: Path = FIGURES_DIR / "EDA_distributions.png"
+PARETO_FRONTIER_PNG: Path = FIGURES_DIR / "pareto_frontier.png"
+RUN_SUMMARY_MD: Path = RESULTS_DIR / "RUN_SUMMARY.md"
 
 FEATURE_NAMES: list[str] = [
     "recency",
@@ -68,6 +77,16 @@ FEATURE_NAMES: list[str] = [
     "return_rate",
     "weekend_ratio",
     "repeat_category_rate",
+]
+
+# Candidate feature sets for CLIQUE subspace model selection.
+# "auto" mode in train searches these sets and keeps the best objective score.
+CLIQUE_FEATURE_SETS: list[list[str]] = [
+    FEATURE_NAMES,
+    ["frequency", "return_rate", "weekend_ratio"],
+    ["frequency", "return_rate", "weekend_ratio", "repeat_category_rate"],
+    ["frequency", "monetary", "avg_basket", "return_rate", "weekend_ratio"],
+    ["recency", "frequency", "monetary", "return_rate", "weekend_ratio"],
 ]
 
 FEATURE_DISPLAY_NAMES: dict[str, str] = {

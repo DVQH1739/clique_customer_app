@@ -1,8 +1,7 @@
-cluster_id,k_dim,subspace,size,coverage_pct,description,business_label
-5,1,['repeat_category_rate'],1995,64.4,"repeat_category_rate in [0.08, 0.33]",General cluster
-4,1,['weekend_ratio'],1892,61.0,"weekend_ratio in [0.00, 0.08]",General cluster
-3,1,['return_rate'],1481,47.8,"return_rate in [0.00, 0.08]",General cluster
-6,2,"['return_rate', 'weekend_ratio']",948,30.6,"return_rate in [0.00, 0.08] AND weekend_ratio in [0.00, 0.08]",General cluster
-0,1,['frequency'],688,22.2,"frequency in [0.00, 0.08]",General cluster
-1,1,['frequency'],622,20.1,"frequency in [0.17, 0.25]",General cluster
-2,1,['avg_basket'],584,18.8,"avg_basket in [0.50, 0.58]",General cluster
+cluster_id,k_dim,subspace,size,coverage_pct,description,business_label,recency_mean,frequency_mean,monetary_mean,avg_basket_mean,product_diversity_mean,return_rate_mean,weekend_ratio_mean,repeat_category_rate_mean
+3,1,['weekend_ratio'],1824,58.8,"weekend_ratio in [0.00, 0.06]",General cluster,120.0107671601615,11.275908479138627,7034.187282637955,456.8570351954446,120.32032301480484,0.24810174728820322,0.006806163201588893,0.4289457869462857
+4,1,['return_rate'],1472,47.5,"return_rate in [0.00, 0.06]",General cluster,115.90355329949239,6.601522842639594,1996.8039365482234,287.0622421298702,107.65989847715736,0.00013244735972444048,0.4188470917299359,0.4212298985198263
+0,2,"['return_rate', 'weekend_ratio']",935,30.2,"return_rate in [0.00, 0.06] AND weekend_ratio in [0.00, 0.06]",General cluster,178.44491978609625,4.110160427807487,1224.8683860962567,290.84530929314343,60.40748663101604,7.743622908358879e-05,0.001020948195494752,0.44405559441348236
+5,1,['frequency'],688,22.2,"frequency in [0.00, 0.06]",General cluster,278.28125,2.0,707.8425,353.92125,55.96875,0.3723958333333333,0.6748115208431295,0.47579370675917343
+1,2,"['frequency', 'weekend_ratio']",513,16.5,"frequency in [0.00, 0.06] AND weekend_ratio in [0.00, 0.06]",General cluster,251.45205479452054,2.0,1899.312328767123,949.6561643835615,34.945205479452056,0.3839041095890411,0.00037359900373599005,0.48566977045720755
+2,2,"['frequency', 'return_rate']",510,16.5,"frequency in [0.00, 0.06] AND return_rate in [0.00, 0.06]",General cluster,249.3846153846154,2.0,577.0409090909092,288.5204545454546,44.37762237762238,0.0,0.6447177542715652,0.445688342610749
