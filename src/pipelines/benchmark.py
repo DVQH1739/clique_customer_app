@@ -35,19 +35,76 @@ BASELINE_ESTIMATORS: list[tuple[str, str, object]] = [
     ("KMeans", "k=5", KMeans(n_clusters=5, random_state=config.RANDOM_STATE, n_init=10)),
     ("KMeans", "k=6", KMeans(n_clusters=6, random_state=config.RANDOM_STATE, n_init=10)),
     ("KMeans", "k=7", KMeans(n_clusters=7, random_state=config.RANDOM_STATE, n_init=10)),
-    ("DBSCAN", "eps=0.2", DBSCAN(eps=0.2, min_samples=5)),
-    ("DBSCAN", "eps=0.3", DBSCAN(eps=0.3, min_samples=5)),
-    ("DBSCAN", "eps=0.5", DBSCAN(eps=0.5, min_samples=5)),
     ("Agglomerative", "k=5", AgglomerativeClustering(n_clusters=5)),
     ("Agglomerative", "k=6", AgglomerativeClustering(n_clusters=6)),
 ]
 
 
+def _model_feature_cols(model: CLIQUE) -> list[str]:
+    return model.feature_names_ or config.FEATURE_NAMES
+
+
+def _dbscan_candidates(X: np.ndarray) -> list[tuple[str, str, object]]:
+    """
+    Build DBSCAN baselines that avoid degenerate one-cluster outputs when possible.
+
+    We score candidate parameter sets by silhouette on non-noise points and
+    keep top 3 valid candidates (>=2 non-noise clusters).
+    """
+    if X.shape[1] <= 3:
+        eps_grid = [0.08, 0.10, 0.12, 0.14, 0.16, 0.18, 0.20]
+        min_samples_grid = [5, 8, 12, 15, 20]
+    else:
+        eps_grid = [0.10, 0.14, 0.18, 0.22, 0.28, 0.35]
+        min_samples_grid = [5, 8, 12]
+
+    ranked: list[tuple[float, float, int, float]] = []
+    for eps in eps_grid:
+        for ms in min_samples_grid:
+            labels = DBSCAN(eps=eps, min_samples=ms).fit_predict(X)
+            mask = labels >= 0
+            n_clusters = len(set(labels.tolist()) - {-1})
+            if n_clusters < 2 or mask.sum() < 2 or len(set(labels[mask].tolist())) < 2:
+                continue
+            try:
+                sil = float(silhouette_score(X[mask], labels[mask]))
+            except Exception:
+                continue
+            ranked.append((sil, eps, ms, float(mask.mean())))
+
+    if not ranked:
+        # Safe fallback if all candidates collapse.
+        return [
+            ("DBSCAN", "eps=0.2,min_samples=5", DBSCAN(eps=0.2, min_samples=5)),
+            ("DBSCAN", "eps=0.3,min_samples=5", DBSCAN(eps=0.3, min_samples=5)),
+            ("DBSCAN", "eps=0.5,min_samples=5", DBSCAN(eps=0.5, min_samples=5)),
+        ]
+
+    ranked.sort(key=lambda r: (r[0], r[3]), reverse=True)
+    out: list[tuple[str, str, object]] = []
+    seen: set[tuple[float, int]] = set()
+    for _, eps, ms, _ in ranked:
+        key = (eps, ms)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            ("DBSCAN", f"eps={eps:.2f},min_samples={ms}", DBSCAN(eps=eps, min_samples=ms))
+        )
+        if len(out) >= 3:
+            break
+    return out
+
+
 def _clear_figures() -> None:
     """Remove stale benchmark PNGs; keep EDA from preprocess."""
+    keep = {
+        config.EDA_DISTRIBUTIONS_PNG.name,
+        config.PARETO_FRONTIER_PNG.name,
+    }
     if config.FIGURES_DIR.exists():
         for png in config.FIGURES_DIR.glob("*.png"):
-            if png.name == config.EDA_DISTRIBUTIONS_PNG.name:
+            if png.name in keep:
                 continue
             png.unlink()
 
@@ -70,7 +127,10 @@ def compare_algorithms(
         row["runtime_sec"] = rt
         rows.append(row)
 
-    estimators = BASELINE_ESTIMATORS if include_full_baselines else BASELINE_ESTIMATORS[:6]
+    static_estimators = (
+        BASELINE_ESTIMATORS if include_full_baselines else BASELINE_ESTIMATORS[:4]
+    )
+    estimators = [*static_estimators, *_dbscan_candidates(X)]
     for name, params, est in estimators:
         t0 = time.perf_counter()
         pred = est.fit_predict(X)
@@ -92,7 +152,7 @@ def compare_algorithms(
 def run_baseline_comparison(X: np.ndarray) -> pd.DataFrame:
     """Intrinsic-only quick comparison for the Streamlit app."""
     rows: list[dict[str, object]] = []
-    for name, params, est in BASELINE_ESTIMATORS[:6]:
+    for name, params, est in [*BASELINE_ESTIMATORS[:4], *_dbscan_candidates(X)]:
         t0 = time.perf_counter()
         labels = est.fit_predict(X)
         rt = time.perf_counter() - t0
@@ -117,7 +177,7 @@ def evaluate_test_split(
 ) -> pd.DataFrame:
     """Predict on held-out test CSV; intrinsic metrics + optional business labels."""
     test_df = pd.read_csv(config.X_TEST_SCALED_CSV)
-    feat_cols = [c for c in config.FEATURE_NAMES if c in test_df.columns]
+    feat_cols = [c for c in _model_feature_cols(model) if c in test_df.columns]
     X_test = test_df[feat_cols].values.astype(float)
     ids = test_df["CustomerID"].values if "CustomerID" in test_df.columns else np.arange(len(test_df))
 
@@ -182,7 +242,11 @@ def _plot_baseline_intrinsic(df: pd.DataFrame) -> None:
     """Best silhouette per algorithm — retail-style bar chart."""
     if "silhouette" not in df.columns:
         return
-    best = df.loc[df.groupby("algorithm", sort=False)["silhouette"].idxmax()].reset_index(drop=True)
+    picks: list[pd.Series] = []
+    for _, grp in df.groupby("algorithm", sort=False):
+        valid = grp[grp["silhouette"].notna()]
+        picks.append(valid.loc[valid["silhouette"].idxmax()] if len(valid) else grp.iloc[0])
+    best = pd.DataFrame(picks).reset_index(drop=True)
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     fig.suptitle("So sánh thuật toán Clustering", fontsize=14)
     for ax, (metric, ylabel) in zip(
@@ -195,17 +259,37 @@ def _plot_baseline_intrinsic(df: pd.DataFrame) -> None:
     ):
         if metric not in best.columns:
             continue
+        metric_vals = best[metric].astype(float)
+        plot_vals = metric_vals.fillna(0.0)
         colors = ["#2196F3" if a == "CLIQUE" else "#90CAF9" for a in best["algorithm"]]
-        bars = ax.bar(best["algorithm"], best[metric], color=colors, edgecolor="white")
+        bars = ax.bar(best["algorithm"], plot_vals, color=colors, edgecolor="white")
         ax.set_ylabel(ylabel)
         ax.tick_params(axis="x", rotation=30)
-        for bar, alg in zip(bars, best["algorithm"]):
+        for i, (bar, alg) in enumerate(zip(bars, best["algorithm"])):
             if alg == "CLIQUE":
                 bar.set_edgecolor("#1565C0")
                 bar.set_linewidth(2)
-            h = bar.get_height()
-            if not np.isnan(h):
-                ax.text(bar.get_x() + bar.get_width() / 2, h, f"{h:.3f}", ha="center", va="bottom", fontsize=8)
+            raw_val = float(metric_vals.iloc[i])
+            if np.isnan(raw_val):
+                bar.set_hatch("//")
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height() + max(plot_vals.max() * 0.02, 0.02),
+                    "N/A",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    color="#555555",
+                )
+            else:
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height(),
+                    f"{raw_val:.3f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                )
     plt.tight_layout()
     plt.savefig(config.BASELINE_COMPARISON_PNG, dpi=150, bbox_inches="tight")
     plt.close()
@@ -296,7 +380,8 @@ def run_retail(model: CLIQUE, cluster_desc: pd.DataFrame) -> pd.DataFrame:
     """Intrinsic baselines on train + test evaluation."""
     config.ensure_dirs()
     _clear_figures()
-    X_train = pd.read_csv(config.X_TRAIN_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
+    feat_cols = _model_feature_cols(model)
+    X_train = pd.read_csv(config.X_TRAIN_SCALED_CSV)[feat_cols].values.astype(float)
 
     print("\n--- BASELINES (train) ---")
     comparison = compare_algorithms(X_train, y_true=None, model=model)
