@@ -2,6 +2,16 @@
 
 **CLIQUE** ([Agrawal et al., SIGMOD 1998](https://doi.org/10.1145/276304.276306)) on **Online Retail II** (`data/raw/online_retail_ii.xlsx`). Command-line pipeline only.
 
+## Requirements
+scikit-learn>=1.4
+pandas>=2.1
+numpy>=1.26
+joblib>=1.3
+openpyxl>=3.1
+nbformat>=5.9
+matplotlib>=3.8
+seaborn>=0.13
+
 ## Quick start
 
 ```bash
