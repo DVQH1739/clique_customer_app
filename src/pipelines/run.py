@@ -1,11 +1,14 @@
 """
-Single entry point for all pipelines.
+Single entry point for CLIQUE pipelines.
 
-Usage (from ``clique_customer_app/``):
+Primary workflow (Online Retail II Excel):
+
+    python src/pipelines/run.py retail
+    python src/pipelines/run.py retail --xlsx data/raw/online_retail_ii.xlsx
+
+Optional synthetic demo (CSV, for supervised metrics only):
 
     python src/pipelines/run.py synthetic
-    python src/pipelines/run.py retail [--xlsx PATH]
-    python src/pipelines/run.py verify
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ if str(ROOT) not in sys.path:
 import config
 from clique.algorithm import CLIQUE
 from clique.metrics import compute_silhouette, evaluate_labeling
-from pipelines import benchmark, data, preprocess, train
+from pipelines import benchmark, data, preprocess, retail, train
 
 
 def verify_clique() -> None:
@@ -49,7 +52,7 @@ def verify_clique() -> None:
 def pipeline_synthetic(steps: set[str] | None = None) -> None:
     all_steps = steps is None
     if all_steps or (steps and "data" in steps):
-        print("=" * 70, "\n[1] Synthetic data\n", "=" * 70)
+        print("=" * 70, "\n[1] Synthetic data (CSV demo)\n", "=" * 70)
         data.persist_synthetic()
     if all_steps or (steps and "preprocess" in steps):
         print("=" * 70, "\n[2] Preprocess\n", "=" * 70)
@@ -60,63 +63,71 @@ def pipeline_synthetic(steps: set[str] | None = None) -> None:
     if all_steps or (steps and "benchmark" in steps):
         print("=" * 70, "\n[4] Benchmark\n", "=" * 70)
         benchmark.run_synthetic()
-    print("\nDone (synthetic). See results/ and models/.")
+    print("\nDone (synthetic).")
 
 
 def pipeline_retail(xlsx: str | None = None, steps: set[str] | None = None) -> None:
+    """Retail pipeline from ``online_retail_ii.xlsx`` (in-memory; CSV is cache only)."""
+    if steps is None:
+        retail.run_from_xlsx(xlsx, save_artifacts=True, do_grid_search=True)
+        return
+
     import joblib
     import pandas as pd
 
     config.ensure_dirs()
     path = data.resolve_retail_xlsx(xlsx)
-    all_steps = steps is None
-    profiles: pd.DataFrame | None = None
-    cluster_desc: pd.DataFrame | None = None
-    model: CLIQUE | None = None
+    profiles = None
+    prep = None
+    model = None
+    cluster_desc = None
 
-    if all_steps or (steps and "data" in steps):
-        print("=" * 70, "\n[1–2] Load, clean, features\n", "=" * 70)
-        _, _, profiles = data.load_and_clean_retail(path)
-    if all_steps or (steps and "preprocess" in steps):
+    if "data" in steps:
+        profiles = data.build_profiles_from_xlsx(path, save_artifacts=True)
+    if "preprocess" in steps:
         if profiles is None:
-            if not config.CUSTOMER_PROFILES_RAW_CSV.exists():
-                raise FileNotFoundError("Run with --step data first.")
             profiles = pd.read_csv(config.CUSTOMER_PROFILES_RAW_CSV)
-        print("=" * 70, "\n[3] Preprocess\n", "=" * 70)
-        preprocess.run_retail(profiles)
-    if all_steps or (steps and "train" in steps):
-        print("=" * 70, "\n[4] Train\n", "=" * 70)
-        X_train = pd.read_csv(config.RETAIL_X_TRAIN_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
-        model, cluster_desc = train.run_retail(X_train)
-    if all_steps or (steps and "benchmark" in steps):
-        print("=" * 70, "\n[5] Benchmark + test\n", "=" * 70)
+        prep = preprocess.run_retail(profiles, winsorize=True)
+    if "train" in steps:
+        if prep is None:
+            X_train = pd.read_csv(config.RETAIL_X_TRAIN_SCALED_CSV)[
+                config.FEATURE_NAMES
+            ].values.astype(float)
+        else:
+            X_train = prep["X_train"]
+        model, cluster_desc, _ = train.run_retail(X_train)
+    if "benchmark" in steps:
         if model is None:
             model = joblib.load(config.RETAIL_MODEL_PKL)
         if cluster_desc is None:
-            loaded = joblib.load(config.RETAIL_PROFILES_PKL)
-            if isinstance(loaded, pd.DataFrame):
-                cluster_desc = loaded
-            else:
-                X_train = pd.read_csv(config.RETAIL_X_TRAIN_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
-                cluster_desc = train.build_cluster_descriptions(model, X_train)
+            cluster_desc = joblib.load(config.RETAIL_PROFILES_PKL)
         benchmark.run_retail(model, cluster_desc)
 
     print("\nDone (retail).")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="CLIQUE customer segmentation pipelines")
+    parser = argparse.ArgumentParser(
+        description="CLIQUE clustering — Online Retail II (xlsx) or synthetic demo"
+    )
     parser.add_argument(
         "mode",
-        choices=["synthetic", "retail", "verify"],
-        help="Pipeline: synthetic (600 labeled), retail (Online Retail II), or verify",
+        nargs="?",
+        default="retail",
+        choices=["retail", "synthetic", "verify"],
+        help="Default: retail (reads online_retail_ii.xlsx)",
     )
-    parser.add_argument("--xlsx", type=str, default=None, help="Path to online_retail_ii.xlsx")
+    parser.add_argument(
+        "--xlsx",
+        type=str,
+        default=None,
+        help=f"Excel path (default: {config.ONLINE_RETAIL_XLSX})",
+    )
     parser.add_argument(
         "--step",
         action="append",
         choices=["data", "preprocess", "train", "benchmark"],
-        help="Run only selected stages (default: all)",
+        help="Run selected stages only (default: full pipeline)",
     )
     args = parser.parse_args()
     steps = set(args.step) if args.step else None

@@ -24,6 +24,23 @@ if str(ROOT) not in sys.path:
 import config
 
 
+def winsorize_features(
+    profiles: pd.DataFrame,
+    columns: list[str] | None = None,
+    quantiles: tuple[float, float] | None = None,
+) -> pd.DataFrame:
+    """Clip extreme feature values before log-transform (stabilizes CLIQUE grids)."""
+    cols = columns or config.FEATURE_NAMES
+    qlo, qhi = quantiles or config.RETAIL_WINSORIZE_QUANTILES
+    out = profiles.copy()
+    for col in cols:
+        if col not in out.columns:
+            continue
+        lo, hi = out[col].quantile([qlo, qhi])
+        out[col] = out[col].clip(lower=lo, upper=hi)
+    return out
+
+
 def _log_transform_frame(profiles: pd.DataFrame) -> pd.DataFrame:
     out = profiles.copy()
     for col in config.LOG_TRANSFORM_COLS:
@@ -113,18 +130,23 @@ def run_retail(
     profiles: pd.DataFrame,
     test_size: float = 0.2,
     plot_eda: bool = True,
+    winsorize: bool = True,
 ) -> dict[str, object]:
     """Preprocess retail customer profiles (no ground-truth labels)."""
     config.ensure_dirs()
     profiles_raw = profiles.copy()
     profiles_work = profiles.copy()
 
-    print("Bước 3.1: Log-transform ...")
+    if winsorize:
+        print("Step 3.0: Winsorize outliers ...")
+        profiles_work = winsorize_features(profiles_work)
+
+    print("Step 3.1: Log-transform ...")
     for col in config.LOG_TRANSFORM_COLS:
         before = profiles_work[col].skew()
         profiles_work[col] = np.log1p(profiles_work[col].clip(lower=0))
         after = profiles_work[col].skew()
-        print(f"  {col:<25} skew: {before:+.2f} → {after:+.2f}")
+        print(f"  {col:<25} skew: {before:+.2f} -> {after:+.2f}")
 
     X = profiles_work[config.FEATURE_NAMES].values
     ids = profiles_work["CustomerID"].astype(str).to_numpy(dtype=object)

@@ -1,22 +1,6 @@
 # CLIQUE — Customer Subspace Clustering
 
-Implementation of **CLIQUE** ([Agrawal et al., SIGMOD 1998](https://doi.org/10.1145/276304.276306)) with reproducible training pipelines and baseline comparison. No web UI — run from the command line or notebook.
-
-## Project structure
-
-```
-clique_customer_app/
-├── README.md · requirements.txt · DATA_CONTRACT.md
-├── docs/RESULTS.md
-├── src/
-│   ├── config.py
-│   ├── clique/              # algorithm · metrics · io
-│   ├── pipelines/           # data · preprocess · train · benchmark · run.py
-│   └── notebooks/training.ipynb
-├── data/raw/ · data/processed/{synthetic,retail}/
-├── models/{synthetic,retail}/
-└── results/{metrics,figures}/
-```
+**CLIQUE** ([Agrawal et al., SIGMOD 1998](https://doi.org/10.1145/276304.276306)) on **Online Retail II** (`data/raw/online_retail_ii.xlsx`). Command-line pipeline only.
 
 ## Quick start
 
@@ -24,24 +8,44 @@ clique_customer_app/
 cd clique_customer_app
 python -m pip install -r requirements.txt
 
-# Synthetic demo (600 labeled customers)
-python src/pipelines/run.py synthetic
-
-# Online Retail II — place online_retail_ii.xlsx in data/raw/
+# Primary: load Excel -> clean -> features -> train -> evaluate
 python src/pipelines/run.py retail
 
-# Smoke test
-python src/pipelines/run.py verify
+# Explicit workbook path
+python src/pipelines/run.py retail --xlsx data/raw/online_retail_ii.xlsx
 ```
 
-Stages: `--step data|preprocess|train|benchmark`
+Place `online_retail_ii.xlsx` in `data/raw/` (not CSV). Files under `data/processed/retail/` are **caches** written after each run.
 
-## Pipelines
+## Project layout
 
-| Mode | Data | Model selection | Output |
-|------|------|-----------------|--------|
-| `synthetic` | Generated CSV + ground truth | ARI → silhouette | Metrics + figures + `models/synthetic/` |
-| `retail` | UCI Online Retail II | Silhouette + coverage | `models/retail/` + test predictions |
+```
+src/
+  clique/           # algorithm, metrics, io
+  pipelines/
+    data.py         # load xlsx, clean, 8 features
+    preprocess.py   # winsorize, log1p, MinMaxScaler
+    train.py        # grid search + CLIQUE fit
+    benchmark.py    # baselines + test metrics
+    retail.py       # end-to-end from xlsx
+    run.py          # CLI entry
+data/raw/online_retail_ii.xlsx
+models/retail/      # clique_model.pkl, scaler.pkl, profiles.pkl
+results/            # metrics CSV, figures PNG
+```
+
+## Cluster quality (retail)
+
+Training uses an expanded `(xi, tau)` grid and a **composite score** (silhouette, coverage, Davies–Bouldin, penalize over-fragmentation). Preprocessing:
+
+- UK customers only, `frequency >= 2` (repeat buyers)
+- Winsorize features at 1st/99th percentile before log-transform
+
+Optional demo with synthetic CSV + ground truth:
+
+```bash
+python src/pipelines/run.py synthetic
+```
 
 ## License
 

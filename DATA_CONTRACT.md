@@ -33,6 +33,10 @@ Optional: `CustomerID` (string).
 | `models/synthetic/` · `models/retail/` | `clique_model.pkl`, `scaler.pkl`, `profiles.pkl` |
 | `results/metrics/` · `results/figures/` | Evaluation CSVs and PNGs |
 
-## Retail pipeline
+## Retail pipeline (primary)
 
-Raw transactions (`online_retail_ii.xlsx`) → `clean_data` → `build_customer_profiles` → preprocess → train → benchmark.
+Source: **`data/raw/online_retail_ii.xlsx`** (Excel, not CSV).
+
+Flow: load xlsx → clean → 8 features → winsorize → log1p → MinMaxScaler → CLIQUE grid search → `models/retail/`.
+
+Customers with `frequency >= 2` only (repeat buyers). Cached CSVs under `data/processed/retail/` are optional outputs.

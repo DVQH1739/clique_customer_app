@@ -96,16 +96,16 @@ def load_raw_data(filepath: str | Path) -> pd.DataFrame:
     """Load Online Retail II Excel (2 sheets) or CSV; normalize column names."""
     filepath = str(filepath)
     if filepath.endswith((".xlsx", ".xls")):
-        print("Đọc sheet 1: Year 2009-2010 ...")
+        print("Reading sheet: Year 2009-2010 ...")
         df1 = pd.read_excel(
             filepath, sheet_name="Year 2009-2010", dtype={"Customer ID": str}
         )
-        print(f"  → {len(df1):,} dòng")
-        print("Đọc sheet 2: Year 2010-2011 ...")
+        print(f"  -> {len(df1):,} rows")
+        print("Reading sheet: Year 2010-2011 ...")
         df2 = pd.read_excel(
             filepath, sheet_name="Year 2010-2011", dtype={"Customer ID": str}
         )
-        print(f"  → {len(df2):,} dòng")
+        print(f"  -> {len(df2):,} rows")
         df = pd.concat([df1, df2], ignore_index=True)
     else:
         df = pd.read_csv(filepath, encoding="latin-1", dtype={"CustomerID": str})
@@ -127,9 +127,9 @@ def clean_data(
     """Clean transactions; return (clean_df, cancellations_df)."""
     n_original = len(df)
     print(f"\n{'=' * 50}")
-    print("BẮT ĐẦU LÀM SẠCH DỮ LIỆU")
+    print("CLEANING TRANSACTIONS")
     print(f"{'=' * 50}")
-    print(f"[0] Dữ liệu gốc:          {n_original:>10,} dòng")
+    print(f"[0] Raw rows:              {n_original:>10,}")
 
     df = df.copy()
     df["InvoiceNo"] = df["InvoiceNo"].astype(str)
@@ -137,46 +137,46 @@ def clean_data(
     cancellations_df = df[df["InvoiceNo"].str.startswith("C")].copy()
     df = df[~df["InvoiceNo"].str.startswith("C")].copy()
     print(
-        f"[1] Sau bỏ hủy đơn:       {len(df):>10,} dòng  "
-        f"(tách ra {len(cancellations_df):,} giao dịch hủy)"
+        f"[1] After drop cancellations:{len(df):>10,}  "
+        f"({len(cancellations_df):,} cancelled)"
     )
 
     df = df[df["CustomerID"].notna() & (df["CustomerID"] != "")].copy()
-    print(f"[2] Sau bỏ null CustomerID:{len(df):>10,} dòng")
+    print(f"[2] After valid CustomerID: {len(df):>10,}")
 
     df = df[df["Quantity"] > 0].copy()
-    print(f"[3] Sau bỏ Quantity <= 0:  {len(df):>10,} dòng")
+    print(f"[3] After Quantity > 0:     {len(df):>10,}")
 
     df = df[df["UnitPrice"] > 0].copy()
-    print(f"[4] Sau bỏ UnitPrice <= 0: {len(df):>10,} dòng")
+    print(f"[4] After UnitPrice > 0:    {len(df):>10,}")
 
     before_dedup = len(df)
     df.drop_duplicates(inplace=True)
     print(
-        f"[5] Sau bỏ duplicate:      {len(df):>10,} dòng  "
-        f"(bỏ {before_dedup - len(df):,} dòng trùng)"
+        f"[5] After dedup:            {len(df):>10,}  "
+        f"(removed {before_dedup - len(df):,})"
     )
 
     df["InvoiceDate"] = pd.to_datetime(df["InvoiceDate"], errors="coerce")
     df = df[df["InvoiceDate"].notna()].copy()
-    print(f"[6] Sau parse datetime:    {len(df):>10,} dòng")
+    print(f"[6] After parse dates:      {len(df):>10,}")
 
     if filter_uk:
         df = df[df["Country"] == "United Kingdom"].copy()
-        print(f"[7] Sau lọc UK only:       {len(df):>10,} dòng")
+        print(f"[7] After UK filter:        {len(df):>10,}")
 
     df["Revenue"] = df["Quantity"] * df["UnitPrice"]
 
     print(f"\n{'=' * 50}")
-    print("KẾT QUẢ LÀM SẠCH:")
-    print(f"  Số dòng cuối:     {len(df):,}")
-    print(f"  Unique Customer:  {df['CustomerID'].nunique():,}")
+    print("CLEAN SUMMARY:")
+    print(f"  Rows:             {len(df):,}")
+    print(f"  Unique customers: {df['CustomerID'].nunique():,}")
     if len(df) > 0:
         print(
-            f"  Khoảng thời gian: "
-            f"{df['InvoiceDate'].min().date()} → {df['InvoiceDate'].max().date()}"
+            f"  Date range:       "
+            f"{df['InvoiceDate'].min().date()} -> {df['InvoiceDate'].max().date()}"
         )
-    print(f"  Giao dịch hủy:    {len(cancellations_df):,}")
+    print(f"  Cancellations:    {len(cancellations_df):,}")
     print(f"{'=' * 50}\n")
 
     return df, cancellations_df
@@ -240,12 +240,60 @@ def build_customer_profiles(
     assert not profiles[config.FEATURE_NAMES].isna().any().any()
     assert not np.isinf(profiles[config.FEATURE_NAMES].values).any()
 
-    print("\n── THỐNG KÊ FEATURES (trước khi transform) ──")
+    print("\n--- FEATURE STATS (before transform) ---")
     stats = profiles[config.FEATURE_NAMES].describe().T[["mean", "std", "min", "max"]]
     stats["skewness"] = profiles[config.FEATURE_NAMES].skew()
     stats["needs_log"] = stats["skewness"].abs() > 1
     print(stats.round(2).to_string())
-    print(f"\nTổng số customers: {len(profiles):,}")
+    print(f"\nTotal customers: {len(profiles):,}")
+
+    return profiles
+
+
+def filter_retail_customers(profiles: pd.DataFrame) -> pd.DataFrame:
+    """Keep repeat buyers; reduces noise from one-off purchasers."""
+    min_freq = config.RETAIL_MIN_FREQUENCY
+    before = len(profiles)
+    out = profiles[profiles["frequency"] >= min_freq].copy()
+    print(
+        f"Filter frequency >= {min_freq}: {before:,} -> {len(out):,} customers"
+    )
+    return out.reset_index(drop=True)
+
+
+def build_profiles_from_xlsx(
+    xlsx_path: str | Path,
+    *,
+    save_artifacts: bool = True,
+) -> pd.DataFrame:
+    """
+    Load Online Retail II from Excel, clean, aggregate features.
+
+    This is the canonical retail data entry (not CSV).
+    """
+    xlsx_path = Path(xlsx_path)
+    if not xlsx_path.exists():
+        raise FileNotFoundError(f"Workbook not found: {xlsx_path}")
+
+    print("\n" + "=" * 70)
+    print("STEP 1-2: LOAD XLSX, CLEAN, FEATURE ENGINEERING")
+    print("=" * 70)
+
+    raw_df = load_raw_data(xlsx_path)
+    print(f"\nMerged rows: {len(raw_df):,}")
+    clean_df, cancel_df = clean_data(raw_df, filter_uk=True)
+    profiles = build_customer_profiles(clean_df, cancel_df)
+    profiles = filter_retail_customers(profiles)
+
+    if save_artifacts:
+        config.ensure_dirs()
+        clean_df.to_csv(config.CLEAN_TRANSACTIONS_CSV, index=False)
+        cancel_df.to_csv(config.CANCELLATIONS_CSV, index=False)
+        profiles.to_csv(config.CUSTOMER_PROFILES_RAW_CSV, index=False)
+        print(
+            f"Cached: {config.CLEAN_TRANSACTIONS_CSV.name}, "
+            f"{config.CUSTOMER_PROFILES_RAW_CSV.name}"
+        )
 
     return profiles
 
@@ -273,17 +321,9 @@ def guess_business_label(dims: list[str], profile: np.ndarray) -> str:
     return "General cluster"
 
 
-def load_and_clean_retail(xlsx_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Steps 1–2 for Online Retail II: load, clean, save CSVs, build profiles."""
-    print("\n" + "=" * 70)
-    print("BƯỚC 1–2: TẢI, LÀM SẠCH, FEATURE ENGINEERING")
-    print("=" * 70)
-    raw_df = load_raw_data(xlsx_path)
-    print(f"\nTổng cộng sau merge: {len(raw_df):,} dòng")
-    clean_df, cancel_df = clean_data(raw_df, filter_uk=True)
-    clean_df.to_csv(config.CLEAN_TRANSACTIONS_CSV, index=False)
-    cancel_df.to_csv(config.CANCELLATIONS_CSV, index=False)
-    profiles = build_customer_profiles(clean_df, cancel_df)
-    profiles.to_csv(config.CUSTOMER_PROFILES_RAW_CSV, index=False)
-    print(f"Saved {config.CLEAN_TRANSACTIONS_CSV.name}, profiles -> {config.CUSTOMER_PROFILES_RAW_CSV.name}")
+def load_and_clean_retail(xlsx_path: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Backward-compatible wrapper around ``build_profiles_from_xlsx``."""
+    profiles = build_profiles_from_xlsx(xlsx_path, save_artifacts=True)
+    clean_df = pd.read_csv(config.CLEAN_TRANSACTIONS_CSV)
+    cancel_df = pd.read_csv(config.CANCELLATIONS_CSV)
     return clean_df, cancel_df, profiles

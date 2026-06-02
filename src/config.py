@@ -13,6 +13,13 @@ RANDOM_STATE: int = 42
 DEFAULT_XI: int = 8
 DEFAULT_TAU: float = 0.05
 
+# Retail CLIQUE grid (wider search for better intrinsic quality)
+RETAIL_XI_GRID: list[int] = [8, 10, 12]
+RETAIL_TAU_GRID: list[float] = [0.10, 0.12, 0.14, 0.16, 0.18]
+RETAIL_MIN_CLUSTERS: int = 4
+RETAIL_MAX_CLUSTERS: int = 10
+RETAIL_MIN_COVERAGE: float = 0.85
+
 # --- Project layout ---
 SRC_DIR: Path = Path(__file__).resolve().parent
 ROOT: Path = SRC_DIR.parent
@@ -31,9 +38,13 @@ RESULTS_DIR: Path = ROOT / "results"
 METRICS_DIR: Path = RESULTS_DIR / "metrics"
 FIGURES_DIR: Path = RESULTS_DIR / "figures"
 
-# --- Raw inputs ---
-RAW_CUSTOMERS_CSV: Path = RAW_DIR / "customers_raw.csv"
+# --- Raw inputs (primary source: Online Retail II Excel) ---
 ONLINE_RETAIL_XLSX: Path = RAW_DIR / "online_retail_ii.xlsx"
+RAW_CUSTOMERS_CSV: Path = RAW_DIR / "customers_raw.csv"  # optional synthetic demo only
+
+# Retail profile filters (improves cluster cohesion)
+RETAIL_MIN_FREQUENCY: int = 2
+RETAIL_WINSORIZE_QUANTILES: tuple[float, float] = (0.01, 0.99)
 
 # --- Synthetic processed + models (Streamlit default) ---
 CUSTOMER_PROFILES_CSV: Path = SYNTHETIC_DIR / "customer_profiles.csv"
