@@ -15,9 +15,7 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Large raw datasets (download separately; not version-controlled)
-*.xlsx
-*.xls
+# Archives (optional downloads)
 *.zip
 
 # Model artifacts (regenerate via src/pipelines/run.py)

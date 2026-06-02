@@ -4,7 +4,7 @@
 
 | Path | Description |
 |------|-------------|
-| `data/raw/online_retail_ii.xlsx` | Online Retail II workbook (2 sheets). Not in git; see `data/raw/README.md`. |
+| `data/raw/online_retail_ii.xlsx` | Online Retail II workbook (2 sheets), versioned in git. |
 
 ## Processed outputs (`data/processed/`)
 

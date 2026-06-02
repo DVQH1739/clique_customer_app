@@ -103,7 +103,7 @@ def validate_retail_pipeline(
     if not config.ONLINE_RETAIL_XLSX.exists():
         raise FileNotFoundError(
             f"Raw workbook not found: {config.ONLINE_RETAIL_XLSX}. "
-            f"See data/raw/README.md"
+            f"Place online_retail_ii.xlsx in data/raw/."
         )
     validate_profiles(profiles)
     validate_scaled_splits()

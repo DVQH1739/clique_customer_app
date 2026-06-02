@@ -4,7 +4,7 @@ Automated checks run at the end of `retail.run_from_xlsx()` (`pipelines/validate
 
 ## Data & features
 
-- [x] `data/raw/online_retail_ii.xlsx` exists locally
+- [x] `data/raw/online_retail_ii.xlsx` exists (cloned with repo)
 - [x] All 8 `FEATURE_NAMES` present; no NaN/inf in profiles
 - [x] `frequency >= MIN_FREQUENCY` (2) for every customer
 

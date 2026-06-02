@@ -8,7 +8,6 @@
 cd clique_customer_app
 python -m pip install -r requirements.txt
 
-# Place workbook in data/raw/ (see data/raw/README.md)
 python src/pipelines/run.py retail
 
 # Or explicit path
@@ -22,9 +21,7 @@ python src/pipelines/run.py verify
 
 ```
 data/
-  raw/
-    README.md              # how to obtain online_retail_ii.xlsx
-    online_retail_ii.xlsx  # local only (gitignored)
+  raw/online_retail_ii.xlsx   # Online Retail II (tracked in git)
   processed/               # CSV caches from pipeline
 models/                    # clique_model.pkl, scaler.pkl, profiles.pkl (gitignored)
 results/
