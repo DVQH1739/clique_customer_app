@@ -31,7 +31,7 @@ def winsorize_features(
 ) -> pd.DataFrame:
     """Clip extreme feature values before log-transform (stabilizes CLIQUE grids)."""
     cols = columns or config.FEATURE_NAMES
-    qlo, qhi = quantiles or config.RETAIL_WINSORIZE_QUANTILES
+    qlo, qhi = quantiles or config.WINSORIZE_QUANTILES
     out = profiles.copy()
     for col in cols:
         if col not in out.columns:
@@ -72,60 +72,6 @@ def plot_feature_distributions(
     print(f"Saved {out.name}")
 
 
-def run_synthetic(test_size: float = 0.2) -> dict[str, object]:
-    """Preprocess synthetic raw CSV (stratified split + labels)."""
-    config.ensure_dirs()
-    if not config.RAW_CUSTOMERS_CSV.exists():
-        raise FileNotFoundError(
-            f"{config.RAW_CUSTOMERS_CSV} missing. Run: python -m pipelines.run synthetic --step data"
-        )
-
-    raw = pd.read_csv(config.RAW_CUSTOMERS_CSV)
-    profiles = _log_transform_frame(raw)
-
-    X = profiles[config.FEATURE_NAMES].to_numpy(dtype=float)
-    y = profiles["true_segment"].to_numpy(dtype=int)
-    ids = profiles["CustomerID"].astype(str).to_numpy(dtype=object)
-
-    X_train, X_test, y_train, y_test, ids_train, ids_test = train_test_split(
-        X, y, ids, test_size=test_size, random_state=config.RANDOM_STATE, stratify=y
-    )
-
-    scaler = MinMaxScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    pd.DataFrame(X_train_scaled, columns=config.FEATURE_NAMES).to_csv(
-        config.X_TRAIN_SCALED_CSV, index=False
-    )
-    pd.DataFrame(X_test_scaled, columns=config.FEATURE_NAMES).to_csv(
-        config.X_TEST_SCALED_CSV, index=False
-    )
-    pd.DataFrame({"CustomerID": ids_train, "true_segment": y_train}).to_csv(
-        config.TRAIN_LABELS_CSV, index=False
-    )
-    pd.DataFrame({"CustomerID": ids_test, "true_segment": y_test}).to_csv(
-        config.TEST_LABELS_CSV, index=False
-    )
-    profiles.to_csv(config.CUSTOMER_PROFILES_CSV, index=False)
-    config.SYNTHETIC_MODELS.mkdir(parents=True, exist_ok=True)
-    joblib.dump(scaler, config.SYNTHETIC_MODELS / "scaler.pkl")
-
-    assert X_train_scaled.min() >= 0.0 and X_train_scaled.max() <= 1.0
-    print(f"Train: {X_train_scaled.shape}, Test: {X_test_scaled.shape}")
-    print(f"Scaler -> {config.SYNTHETIC_MODELS / 'scaler.pkl'}")
-
-    return {
-        "X_train": X_train_scaled,
-        "X_test": X_test_scaled,
-        "y_train": y_train,
-        "y_test": y_test,
-        "ids_train": ids_train,
-        "ids_test": ids_test,
-        "scaler": scaler,
-    }
-
-
 def run_retail(
     profiles: pd.DataFrame,
     test_size: float = 0.2,
@@ -161,14 +107,14 @@ def run_retail(
     print(f"  Train range: [{X_train_scaled.min():.4f}, {X_train_scaled.max():.4f}]")
     print(f"  Test range:  [{X_test_scaled.min():.4f}, {X_test_scaled.max():.4f}]")
 
-    config.RETAIL_MODELS.mkdir(parents=True, exist_ok=True)
-    joblib.dump(scaler, config.RETAIL_SCALER_PKL)
+    config.ensure_dirs()
+    joblib.dump(scaler, config.SCALER_PKL)
     pd.DataFrame(X_train_scaled, columns=config.FEATURE_NAMES).assign(
         CustomerID=ids_train
-    ).to_csv(config.RETAIL_X_TRAIN_SCALED_CSV, index=False)
+    ).to_csv(config.X_TRAIN_SCALED_CSV, index=False)
     pd.DataFrame(X_test_scaled, columns=config.FEATURE_NAMES).assign(
         CustomerID=ids_test
-    ).to_csv(config.RETAIL_X_TEST_SCALED_CSV, index=False)
+    ).to_csv(config.X_TEST_SCALED_CSV, index=False)
 
     if plot_eda:
         transformed = profiles_raw.copy()

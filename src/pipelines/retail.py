@@ -2,7 +2,7 @@
 Online Retail II pipeline: load xlsx -> profiles -> preprocess -> train -> benchmark.
 
 Primary data source: ``data/raw/online_retail_ii.xlsx`` (not CSV).
-Processed CSVs under ``data/processed/retail/`` are optional caches only.
+Processed CSVs under ``data/processed/`` are optional caches only.
 """
 
 from __future__ import annotations

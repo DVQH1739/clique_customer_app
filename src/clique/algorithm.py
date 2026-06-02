@@ -328,7 +328,7 @@ class CLIQUE:
             for dim in sorted(cluster["subspace"]):
                 lo, hi = dim_ranges[dim]
                 fname = self.feature_names_[dim] if self.feature_names_ else f"f{dim}"
-                parts.append(f"{fname} ∈ [{lo:.2f}, {hi:.2f}]")
+                parts.append(f"{fname} in [{lo:.2f}, {hi:.2f}]")
             cluster["description"] = " AND ".join(parts)
 
     def _assign_labels(self) -> None:

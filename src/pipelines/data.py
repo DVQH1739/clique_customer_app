@@ -1,5 +1,5 @@
 """
-Data ingestion: synthetic ground-truth profiles and Online Retail II transactions.
+Data ingestion: Online Retail II (Excel) -> clean transactions and customer profiles.
 """
 
 from __future__ import annotations
@@ -11,71 +11,6 @@ import numpy as np
 import pandas as pd
 
 import config
-
-N_SYNTHETIC = 600
-
-SEGMENT_RANGES: list[dict[str, tuple[float, float]]] = [
-    {
-        "recency": (1, 45),
-        "frequency": (20, 60),
-        "monetary": (4000, 20000),
-        "product_diversity": (120, 320),
-        "return_rate": (0.0, 0.08),
-        "weekend_ratio": (0.05, 0.30),
-        "repeat_category_rate": (0.50, 0.85),
-    },
-    {
-        "recency": (200, 365),
-        "frequency": (1, 6),
-        "monetary": (50, 800),
-        "product_diversity": (1, 40),
-        "return_rate": (0.15, 0.45),
-        "weekend_ratio": (0.40, 0.80),
-        "repeat_category_rate": (0.05, 0.30),
-    },
-    {
-        "recency": (40, 160),
-        "frequency": (8, 20),
-        "monetary": (900, 4000),
-        "product_diversity": (40, 120),
-        "return_rate": (0.03, 0.18),
-        "weekend_ratio": (0.20, 0.55),
-        "repeat_category_rate": (0.35, 0.65),
-    },
-]
-
-
-def generate_synthetic() -> pd.DataFrame:
-    """Create natural-scale profiles with ground-truth ``true_segment``."""
-    rng = np.random.default_rng(config.RANDOM_STATE)
-    n_per = N_SYNTHETIC // 3
-    counts = [n_per, n_per, N_SYNTHETIC - 2 * n_per]
-
-    chunks: list[pd.DataFrame] = []
-    for seg_idx, (params, n) in enumerate(zip(SEGMENT_RANGES, counts)):
-        data: dict[str, np.ndarray] = {}
-        for feat, (lo, hi) in params.items():
-            data[feat] = rng.uniform(lo, hi, size=n)
-        data["avg_basket"] = data["monetary"] / np.maximum(data["frequency"], 1)
-        df = pd.DataFrame(data)
-        df["true_segment"] = seg_idx
-        df["segment_name"] = config.SEGMENT_NAMES[seg_idx]
-        chunks.append(df)
-
-    out = pd.concat(chunks, ignore_index=True)
-    out = out.sample(frac=1, random_state=config.RANDOM_STATE).reset_index(drop=True)
-    out["CustomerID"] = [f"C{i:05d}" for i in range(len(out))]
-    cols = ["CustomerID", *config.FEATURE_NAMES, "true_segment", "segment_name"]
-    return out[cols]
-
-
-def persist_synthetic() -> None:
-    """Write synthetic raw CSV to ``data/raw/``."""
-    config.ensure_dirs()
-    raw = generate_synthetic()
-    raw.to_csv(config.RAW_CUSTOMERS_CSV, index=False, encoding="utf-8")
-    print(f"Wrote {config.RAW_CUSTOMERS_CSV} ({len(raw)} rows)")
-    print("Segment counts:\n", raw["segment_name"].value_counts().to_string())
 
 
 def resolve_retail_xlsx(explicit: str | None = None) -> Path:
@@ -252,7 +187,7 @@ def build_customer_profiles(
 
 def filter_retail_customers(profiles: pd.DataFrame) -> pd.DataFrame:
     """Keep repeat buyers; reduces noise from one-off purchasers."""
-    min_freq = config.RETAIL_MIN_FREQUENCY
+    min_freq = config.MIN_FREQUENCY
     before = len(profiles)
     out = profiles[profiles["frequency"] >= min_freq].copy()
     print(
@@ -305,7 +240,7 @@ def guess_business_label(dims: list[str], profile: np.ndarray) -> str:
         fi = config.FEATURE_NAMES.index("frequency")
         mi = config.FEATURE_NAMES.index("monetary")
         if profile[fi] > 0.6 and profile[mi] > 0.6:
-            return "VIP — Mua nhiều, chi tiêu cao"
+            return "VIP - Mua nhieu, chi tieu cao"
         if profile[fi] < 0.3:
             return "One-time buyer"
     if "recency" in dim_set and "weekend_ratio" in dim_set:
@@ -313,7 +248,7 @@ def guess_business_label(dims: list[str], profile: np.ndarray) -> str:
     if "repeat_category_rate" in dim_set and "frequency" in dim_set:
         return "Brand-loyal customer"
     if "product_diversity" in dim_set and "avg_basket" in dim_set:
-        return "Explorer — Thích đa dạng sản phẩm"
+        return "Explorer - Thich da dang san pham"
     if "return_rate" in dim_set:
         ri = config.FEATURE_NAMES.index("return_rate")
         if profile[ri] > 0.4:

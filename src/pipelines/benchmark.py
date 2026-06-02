@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.cluster import AgglomerativeClustering, DBSCAN, KMeans
-from sklearn.metrics import classification_report, davies_bouldin_score, silhouette_score
+from sklearn.metrics import davies_bouldin_score, silhouette_score
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -25,12 +25,7 @@ if str(ROOT) not in sys.path:
 
 import config
 from clique.algorithm import CLIQUE
-from clique.metrics import (
-    align_predictions,
-    confusion_matrix_aligned,
-    evaluate_labeling,
-    intrinsic_metrics,
-)
+from clique.metrics import evaluate_labeling, intrinsic_metrics
 
 sns.set_theme(style="whitegrid")
 
@@ -49,8 +44,11 @@ BASELINE_ESTIMATORS: list[tuple[str, str, object]] = [
 
 
 def _clear_figures() -> None:
+    """Remove stale benchmark PNGs; keep EDA from preprocess."""
     if config.FIGURES_DIR.exists():
         for png in config.FIGURES_DIR.glob("*.png"):
+            if png.name == config.EDA_DISTRIBUTIONS_PNG.name:
+                continue
             png.unlink()
 
 
@@ -118,12 +116,7 @@ def evaluate_test_split(
     cluster_desc: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Predict on held-out test CSV; intrinsic metrics + optional business labels."""
-    test_path = (
-        config.RETAIL_X_TEST_SCALED_CSV
-        if config.RETAIL_X_TEST_SCALED_CSV.exists()
-        else config.X_TEST_SCALED_CSV
-    )
-    test_df = pd.read_csv(test_path)
+    test_df = pd.read_csv(config.X_TEST_SCALED_CSV)
     feat_cols = [c for c in config.FEATURE_NAMES if c in test_df.columns]
     X_test = test_df[feat_cols].values.astype(float)
     ids = test_df["CustomerID"].values if "CustomerID" in test_df.columns else np.arange(len(test_df))
@@ -167,17 +160,6 @@ def evaluate_test_split(
     return result
 
 
-def _export_classification_report(X: np.ndarray, y: np.ndarray, model: CLIQUE) -> None:
-    pred = model.predict(X)
-    aligned = align_predictions(y, pred)
-    target_names = [config.SEGMENT_NAMES[c] for c in sorted(np.unique(y))]
-    report = classification_report(
-        y, aligned, target_names=target_names, output_dict=True, zero_division=0
-    )
-    pd.DataFrame(report).transpose().to_csv(config.CLIQUE_CLASSIFICATION_CSV)
-    print(f"Classification report -> {config.CLIQUE_CLASSIFICATION_CSV}")
-
-
 def _export_subspace_coverage(model: CLIQUE) -> None:
     names = model.feature_names_ or config.FEATURE_NAMES
     rows = []
@@ -194,39 +176,6 @@ def _export_subspace_coverage(model: CLIQUE) -> None:
     out = config.METRICS_DIR / "clique_subspace_coverage.csv"
     pd.DataFrame(rows).sort_values("coverage", ascending=False).to_csv(out, index=False)
     print(f"Subspace coverage -> {out.name}")
-
-
-def _plot_confusion(X: np.ndarray, y: np.ndarray, model: CLIQUE) -> None:
-    cm, classes = confusion_matrix_aligned(y, model.predict(X))
-    labels = [config.SEGMENT_NAMES[c] for c in classes]
-    plt.figure(figsize=(6, 5))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=labels, yticklabels=labels)
-    plt.xlabel("Predicted (aligned)")
-    plt.ylabel("True segment")
-    plt.title("CLIQUE Confusion Matrix")
-    plt.tight_layout()
-    plt.savefig(config.FIGURES_DIR / "confusion_matrix_clique.png", dpi=150)
-    plt.close()
-
-
-def _plot_metric_comparison(comparison: pd.DataFrame) -> None:
-    metrics = [m for m in ("adjusted_rand", "nmi", "f1_macro") if m in comparison.columns]
-    if not metrics:
-        metrics = [m for m in ("silhouette",) if m in comparison.columns]
-    labels = [f"{a}\n{p}" for a, p in zip(comparison["algorithm"], comparison["params"])]
-    x = np.arange(len(comparison))
-    width = 0.8 / max(len(metrics), 1)
-    plt.figure(figsize=(11, 5))
-    for i, metric in enumerate(metrics):
-        plt.bar(x + i * width, comparison[metric].fillna(0), width, label=metric)
-    plt.xticks(x + width * (len(metrics) - 1) / 2, labels, rotation=45, ha="right", fontsize=8)
-    plt.ylabel("score (higher is better)")
-    plt.ylim(0, 1.05)
-    plt.title("Clustering quality by algorithm")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(config.FIGURES_DIR / "metric_comparison.png", dpi=150)
-    plt.close()
 
 
 def _plot_baseline_intrinsic(df: pd.DataFrame) -> None:
@@ -343,56 +292,17 @@ def _plot_top_subspace_grids(X: np.ndarray, model: CLIQUE) -> None:
         plt.close()
 
 
-def run_synthetic() -> pd.DataFrame:
-    """Full benchmark on synthetic train+test with ground truth."""
+def run_retail(model: CLIQUE, cluster_desc: pd.DataFrame) -> pd.DataFrame:
+    """Intrinsic baselines on train + test evaluation."""
     config.ensure_dirs()
     _clear_figures()
-
-    Xtr = pd.read_csv(config.X_TRAIN_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
-    Xte = pd.read_csv(config.X_TEST_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
-    ytr = pd.read_csv(config.TRAIN_LABELS_CSV)["true_segment"].values.astype(int)
-    yte = pd.read_csv(config.TEST_LABELS_CSV)["true_segment"].values.astype(int)
-    X_all = np.vstack([Xtr, Xte])
-    y_all = np.concatenate([ytr, yte])
-    model = joblib.load(config.MODEL_PKL)
-
-    comparison = compare_algorithms(X_all, y_all, model)
-    comparison.to_csv(config.COMPARISON_METRICS_CSV, index=False)
-    print(f"Comparison -> {config.COMPARISON_METRICS_CSV.name}")
-    print(comparison.to_string(index=False))
-
-    _export_classification_report(X_all, y_all, model)
-    _export_subspace_coverage(model)
-    _plot_confusion(X_all, y_all, model)
-    _plot_metric_comparison(comparison)
-    _plot_subspace_heatmap(model)
-    _plot_cluster_sizes(model)
-    _plot_top_subspace_grids(X_all, model)
-
-    evaluate_test_split(model, cluster_desc=None)
-    if config.TEST_LABELS_CSV.exists():
-        X_test = pd.read_csv(config.X_TEST_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
-        y_test = pd.read_csv(config.TEST_LABELS_CSV)["true_segment"].values.astype(int)
-        pred = model.predict(X_test)
-        row = evaluate_labeling(X_test, pred, y_test, "CLIQUE-test", f"xi={model.xi}")
-        print("\n--- Supervised metrics on TEST only ---")
-        for k in ("accuracy", "adjusted_rand", "f1_macro", "silhouette"):
-            if k in row:
-                print(f"  {k}: {row[k]}")
-
-    print(f"Figures -> {config.FIGURES_DIR}")
-    return comparison
-
-
-def run_retail(model: CLIQUE, cluster_desc: pd.DataFrame) -> pd.DataFrame:
-    """Intrinsic baselines on train + test evaluation (retail)."""
-    config.ensure_dirs()
-    X_train = pd.read_csv(config.RETAIL_X_TRAIN_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
+    X_train = pd.read_csv(config.X_TRAIN_SCALED_CSV)[config.FEATURE_NAMES].values.astype(float)
 
     print("\n--- BASELINES (train) ---")
     comparison = compare_algorithms(X_train, y_true=None, model=model)
     comparison.to_csv(config.BASELINE_COMPARISON_CSV, index=False)
     print(comparison.to_string(index=False))
+    _export_subspace_coverage(model)
     _plot_baseline_intrinsic(comparison)
     _plot_subspace_heatmap(model)
     _plot_cluster_sizes(model)
