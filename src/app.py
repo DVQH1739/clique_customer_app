@@ -15,21 +15,15 @@ import streamlit as st
 
 import config
 from clique.algorithm import CLIQUE, NOISE_LABEL
-from clique.utils import (
-    FEATURE_DISPLAY_NAMES,
-    FEATURE_NAMES,
-    LOG_TRANSFORM_COLS,
-    apply_log_transform,
-    build_customer_profiles,
-    clean_data,
-    load_model,
-    load_raw_data,
-    run_baseline_comparison,
-    validate_profile_csv,
-)
+from clique.io import apply_log_transform, load_model, validate_profile_csv
+from pipelines.benchmark import run_baseline_comparison
+from pipelines.data import build_customer_profiles, clean_data, load_raw_data
 
-MODELS_DIR = config.MODELS_DIR
+MODELS_DIR = config.SYNTHETIC_MODELS
 DATA_DIR = config.DATA_DIR
+FEATURE_NAMES = config.FEATURE_NAMES
+FEATURE_DISPLAY_NAMES = config.FEATURE_DISPLAY_NAMES
+LOG_TRANSFORM_COLS = config.LOG_TRANSFORM_COLS
 
 MARKETING_TIPS: dict[int, str] = {
     0: "VIP retention: offer early access and loyalty rewards to protect high-value share.",

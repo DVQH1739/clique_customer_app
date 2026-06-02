@@ -1,0 +1,76 @@
+cluster_id,k_dim,subspace,size,coverage_pct,description,business_label
+2,1,['monetary'],4153,97.0,"monetary ∈ [0.20, 0.70]",General cluster
+1,1,['frequency'],3879,90.6,"frequency ∈ [0.00, 0.40]",General cluster
+0,1,['recency'],3757,87.8,"recency ∈ [0.30, 1.00]",General cluster
+3,1,['avg_basket'],3729,87.1,"avg_basket ∈ [0.30, 0.50]",General cluster
+4,1,['product_diversity'],3598,84.1,"product_diversity ∈ [0.20, 0.70]",General cluster
+7,1,['repeat_category_rate'],3509,82.0,"repeat_category_rate ∈ [0.10, 0.50]",General cluster
+5,1,['return_rate'],3334,77.9,"return_rate ∈ [0.00, 0.30]",General cluster
+21,2,"['monetary', 'avg_basket']",2999,70.1,"monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.50] OR monetary ∈ [0.40, 0.50] AND avg_basket ∈ [0.30, 0.50] OR monetary ∈ [0.50, 0.60] AND avg_basket ∈ [0.40, 0.50]",General cluster
+6,1,['weekend_ratio'],2985,69.7,"weekend_ratio ∈ [0.00, 0.10]",General cluster
+30,2,"['avg_basket', 'weekend_ratio']",2544,59.4,"avg_basket ∈ [0.30, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+19,2,"['frequency', 'weekend_ratio']",2513,58.7,"frequency ∈ [0.00, 0.30] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+16,2,"['frequency', 'avg_basket']",2396,56.0,"frequency ∈ [0.00, 0.10] AND avg_basket ∈ [0.30, 0.50] OR frequency ∈ [0.10, 0.30] AND avg_basket ∈ [0.40, 0.50]",General cluster
+36,2,"['weekend_ratio', 'repeat_category_rate']",2358,55.1,"weekend_ratio ∈ [0.00, 0.10] AND repeat_category_rate ∈ [0.10, 0.50]",General cluster
+26,2,"['monetary', 'weekend_ratio']",2351,54.9,"monetary ∈ [0.30, 0.60] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+14,2,"['frequency', 'monetary']",2334,54.5,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.20, 0.50] OR frequency ∈ [0.10, 0.20] AND monetary ∈ [0.40, 0.50]",One-time buyer
+29,2,"['avg_basket', 'return_rate']",2256,52.7,"avg_basket ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10]",General cluster
+33,2,"['product_diversity', 'weekend_ratio']",2213,51.7,"product_diversity ∈ [0.20, 0.60] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+28,2,"['avg_basket', 'product_diversity']",2134,49.9,"avg_basket ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.50] OR avg_basket ∈ [0.40, 0.50] AND product_diversity ∈ [0.30, 0.60]",Explorer — Thích đa dạng sản phẩm
+25,2,"['monetary', 'return_rate']",2107,49.2,"monetary ∈ [0.20, 0.50] AND return_rate ∈ [0.00, 0.10]",General cluster
+31,2,"['avg_basket', 'repeat_category_rate']",2035,47.5,"avg_basket ∈ [0.30, 0.40] AND repeat_category_rate ∈ [0.20, 0.40] OR avg_basket ∈ [0.40, 0.50] AND repeat_category_rate ∈ [0.20, 0.40]",General cluster
+18,2,"['frequency', 'return_rate']",2033,47.5,"frequency ∈ [0.00, 0.20] AND return_rate ∈ [0.00, 0.10]",General cluster
+32,2,"['product_diversity', 'return_rate']",1949,45.5,"product_diversity ∈ [0.20, 0.60] AND return_rate ∈ [0.00, 0.10]",General cluster
+34,2,"['return_rate', 'weekend_ratio']",1877,43.9,"return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+55,3,"['monetary', 'avg_basket', 'weekend_ratio']",1787,41.8,"monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.50] AND weekend_ratio ∈ [0.00, 0.10] OR monetary ∈ [0.40, 0.60] AND avg_basket ∈ [0.40, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+35,2,"['return_rate', 'repeat_category_rate']",1713,40.0,"return_rate ∈ [0.00, 0.10] AND repeat_category_rate ∈ [0.20, 0.50]",General cluster
+61,3,"['avg_basket', 'return_rate', 'weekend_ratio']",1609,37.6,"avg_basket ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+54,3,"['monetary', 'avg_basket', 'return_rate']",1373,32.1,"monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10] OR monetary ∈ [0.40, 0.50] AND avg_basket ∈ [0.40, 0.50] AND return_rate ∈ [0.00, 0.10]",General cluster
+17,2,"['frequency', 'product_diversity']",1362,31.8,"frequency ∈ [0.00, 0.10] AND product_diversity ∈ [0.20, 0.50]",General cluster
+47,3,"['frequency', 'avg_basket', 'return_rate']",1308,30.6,"frequency ∈ [0.00, 0.10] AND avg_basket ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10]",General cluster
+59,3,"['monetary', 'return_rate', 'weekend_ratio']",1296,30.3,"monetary ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+48,3,"['frequency', 'avg_basket', 'weekend_ratio']",1280,29.9,"frequency ∈ [0.00, 0.10] AND avg_basket ∈ [0.30, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+51,3,"['frequency', 'return_rate', 'weekend_ratio']",1251,29.2,"frequency ∈ [0.00, 0.10] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+13,2,"['recency', 'weekend_ratio']",1230,28.7,"recency ∈ [0.80, 1.00] AND weekend_ratio ∈ [0.00, 0.10]",Seasonal / Weekend shopper
+11,2,"['recency', 'return_rate']",1159,27.1,"recency ∈ [0.80, 1.00] AND return_rate ∈ [0.00, 0.10]",General cluster
+20,2,"['frequency', 'repeat_category_rate']",1151,26.9,"frequency ∈ [0.00, 0.10] AND repeat_category_rate ∈ [0.20, 0.50]",Brand-loyal customer
+8,2,"['recency', 'frequency']",1145,26.8,"recency ∈ [0.80, 1.00] AND frequency ∈ [0.00, 0.10]",General cluster
+71,4,"['frequency', 'avg_basket', 'return_rate', 'weekend_ratio']",1048,24.5,"frequency ∈ [0.00, 0.10] AND avg_basket ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+41,3,"['frequency', 'monetary', 'avg_basket']",1000,23.4,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.50]",One-time buyer
+38,3,"['recency', 'frequency', 'return_rate']",947,22.1,"recency ∈ [0.80, 1.00] AND frequency ∈ [0.00, 0.10] AND return_rate ∈ [0.00, 0.10]",General cluster
+39,3,"['recency', 'frequency', 'weekend_ratio']",941,22.0,"recency ∈ [0.80, 1.00] AND frequency ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",Seasonal / Weekend shopper
+40,3,"['recency', 'return_rate', 'weekend_ratio']",910,21.3,"recency ∈ [0.80, 1.00] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",Seasonal / Weekend shopper
+63,3,"['product_diversity', 'return_rate', 'weekend_ratio']",868,20.3,"product_diversity ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+64,3,"['return_rate', 'weekend_ratio', 'repeat_category_rate']",855,20.0,"return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10] AND repeat_category_rate ∈ [0.20, 0.40]",General cluster
+44,3,"['frequency', 'monetary', 'return_rate']",853,19.9,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10]",One-time buyer
+66,4,"['frequency', 'monetary', 'avg_basket', 'return_rate']",843,19.7,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.50] AND return_rate ∈ [0.00, 0.10]",One-time buyer
+45,3,"['frequency', 'monetary', 'weekend_ratio']",809,18.9,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND weekend_ratio ∈ [0.00, 0.10]",One-time buyer
+67,4,"['frequency', 'monetary', 'avg_basket', 'weekend_ratio']",799,18.7,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",One-time buyer
+62,3,"['avg_basket', 'weekend_ratio', 'repeat_category_rate']",774,18.1,"avg_basket ∈ [0.40, 0.50] AND weekend_ratio ∈ [0.00, 0.10] AND repeat_category_rate ∈ [0.20, 0.40]",General cluster
+27,2,"['monetary', 'repeat_category_rate']",755,17.6,"monetary ∈ [0.40, 0.50] AND repeat_category_rate ∈ [0.20, 0.40]",General cluster
+70,4,"['frequency', 'monetary', 'return_rate', 'weekend_ratio']",675,15.8,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",One-time buyer
+23,2,"['monetary', 'product_diversity']",558,13.0,"monetary ∈ [0.40, 0.50] AND product_diversity ∈ [0.40, 0.50]",General cluster
+49,3,"['frequency', 'product_diversity', 'return_rate']",497,11.6,"frequency ∈ [0.00, 0.10] AND product_diversity ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10]",General cluster
+50,3,"['frequency', 'product_diversity', 'weekend_ratio']",496,11.6,"frequency ∈ [0.00, 0.10] AND product_diversity ∈ [0.30, 0.40] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+22,2,"['monetary', 'product_diversity']",484,11.3,"monetary ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.40]",General cluster
+65,4,"['recency', 'frequency', 'return_rate', 'weekend_ratio']",481,11.2,"recency ∈ [0.90, 1.00] AND frequency ∈ [0.00, 0.10] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",Seasonal / Weekend shopper
+43,3,"['frequency', 'monetary', 'product_diversity']",425,9.9,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.40]",One-time buyer
+9,2,"['recency', 'monetary']",420,9.8,"recency ∈ [0.90, 1.00] AND monetary ∈ [0.30, 0.40]",General cluster
+73,4,"['monetary', 'avg_basket', 'return_rate', 'weekend_ratio']",415,9.7,"monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+10,2,"['recency', 'avg_basket']",401,9.4,"recency ∈ [0.90, 1.00] AND avg_basket ∈ [0.30, 0.40]",General cluster
+72,4,"['frequency', 'product_diversity', 'return_rate', 'weekend_ratio']",400,9.3,"frequency ∈ [0.00, 0.10] AND product_diversity ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+58,3,"['monetary', 'product_diversity', 'weekend_ratio']",399,9.3,"monetary ∈ [0.40, 0.50] AND product_diversity ∈ [0.40, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+37,3,"['recency', 'frequency', 'monetary']",394,9.2,"recency ∈ [0.90, 1.00] AND frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40]",One-time buyer
+56,3,"['monetary', 'product_diversity', 'return_rate']",390,9.1,"monetary ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10]",General cluster
+57,3,"['monetary', 'product_diversity', 'weekend_ratio']",385,9.0,"monetary ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.40] AND weekend_ratio ∈ [0.00, 0.10]",General cluster
+60,3,"['avg_basket', 'product_diversity', 'weekend_ratio']",377,8.8,"avg_basket ∈ [0.40, 0.50] AND product_diversity ∈ [0.40, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",Explorer — Thích đa dạng sản phẩm
+24,2,"['monetary', 'product_diversity']",375,8.8,"monetary ∈ [0.50, 0.60] AND product_diversity ∈ [0.50, 0.60]",General cluster
+46,3,"['frequency', 'monetary', 'weekend_ratio']",370,8.6,"frequency ∈ [0.10, 0.20] AND monetary ∈ [0.40, 0.50] AND weekend_ratio ∈ [0.00, 0.10]",One-time buyer
+15,2,"['frequency', 'monetary']",368,8.6,"frequency ∈ [0.20, 0.30] AND monetary ∈ [0.50, 0.60]",One-time buyer
+42,3,"['frequency', 'monetary', 'avg_basket']",354,8.3,"frequency ∈ [0.10, 0.20] AND monetary ∈ [0.40, 0.50] AND avg_basket ∈ [0.40, 0.50]",One-time buyer
+74,5,"['frequency', 'monetary', 'avg_basket', 'return_rate', 'weekend_ratio']",353,8.2,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND avg_basket ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10] AND weekend_ratio ∈ [0.00, 0.10]",One-time buyer
+52,3,"['frequency', 'return_rate', 'repeat_category_rate']",350,8.2,"frequency ∈ [0.00, 0.10] AND return_rate ∈ [0.00, 0.10] AND repeat_category_rate ∈ [0.20, 0.30]",Brand-loyal customer
+68,4,"['frequency', 'monetary', 'product_diversity', 'return_rate']",348,8.1,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.40] AND return_rate ∈ [0.00, 0.10]",One-time buyer
+69,4,"['frequency', 'monetary', 'product_diversity', 'weekend_ratio']",345,8.1,"frequency ∈ [0.00, 0.10] AND monetary ∈ [0.30, 0.40] AND product_diversity ∈ [0.30, 0.40] AND weekend_ratio ∈ [0.00, 0.10]",One-time buyer
+12,2,"['recency', 'weekend_ratio']",344,8.0,"recency ∈ [0.50, 0.60] AND weekend_ratio ∈ [0.00, 0.10]",Seasonal / Weekend shopper
+53,3,"['monetary', 'avg_basket', 'product_diversity']",343,8.0,"monetary ∈ [0.40, 0.50] AND avg_basket ∈ [0.40, 0.50] AND product_diversity ∈ [0.40, 0.50]",Explorer — Thích đa dạng sản phẩm

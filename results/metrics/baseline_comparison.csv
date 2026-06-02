@@ -1,0 +1,11 @@
+algorithm,params,n_clusters,n_noise,coverage_pct,silhouette,davies_bouldin,calinski_harabasz,runtime_sec
+KMeans,k=4,4,0,100.0,0.2812,1.2399,1561.4,3.429
+KMeans,k=5,5,0,100.0,0.287,1.1781,1496.6,0.089
+KMeans,k=6,6,0,100.0,0.2549,1.2301,1418.8,0.114
+KMeans,k=7,7,0,100.0,0.2545,1.2418,1336.9,0.13
+DBSCAN,eps=0.2,3,315,92.6,0.3817,0.5661,27.9,0.365
+DBSCAN,eps=0.3,1,29,99.3,,,,0.738
+DBSCAN,eps=0.5,1,1,100.0,,,,1.211
+Agglomerative,k=5,5,0,100.0,0.188,1.4652,1119.5,1.064
+Agglomerative,k=6,6,0,100.0,0.2002,1.3407,1095.7,0.898
+CLIQUE,"xi=10,tau=0.08",69,0,100.0,-0.2195,3.8795,60.7,1.289
