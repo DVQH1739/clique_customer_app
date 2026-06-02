@@ -33,7 +33,6 @@ FIGURES_DIR: Path = RESULTS_DIR / "figures"
 
 # --- Raw inputs ---
 RAW_CUSTOMERS_CSV: Path = RAW_DIR / "customers_raw.csv"
-RAW_CORRUPTED_CSV: Path = RAW_DIR / "customers_corrupted.csv"
 ONLINE_RETAIL_XLSX: Path = RAW_DIR / "online_retail_ii.xlsx"
 
 # --- Synthetic processed + models (Streamlit default) ---

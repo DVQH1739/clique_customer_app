@@ -11,7 +11,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 
 DEFAULT_XI: int = 8
 DEFAULT_TAU: float = 0.05
@@ -127,52 +126,6 @@ class CLIQUE:
                     }
                 )
         return pd.DataFrame(rows)
-
-    def plot_grid_static(
-        self,
-        X: np.ndarray,
-        feature_x_idx: int,
-        feature_y_idx: int,
-        feature_names: list[str] | None = None,
-    ) -> go.Figure:
-        names = feature_names or self.feature_names_ or [f"f{i}" for i in range(self.n_features_)]
-        colors = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A"]
-        fig = go.Figure()
-        labels = self.labels_ if self.labels_ is not None else np.full(len(X), NOISE_LABEL)
-        for label in np.unique(labels):
-            mask = labels == label
-            color = "#AAAAAA" if label == NOISE_LABEL else colors[int(label) % len(colors)]
-            fig.add_trace(
-                go.Scatter(
-                    x=X[mask, feature_x_idx],
-                    y=X[mask, feature_y_idx],
-                    mode="markers",
-                    marker=dict(color=color, size=5, opacity=0.6),
-                    name="Noise" if label == NOISE_LABEL else f"Cluster {label}",
-                )
-            )
-        for i in range(self.xi + 1):
-            v = i / self.xi
-            fig.add_shape(type="line", x0=v, x1=v, y0=0, y1=1, line=dict(color="lightgray", width=0.5))
-            fig.add_shape(type="line", x0=0, x1=1, y0=v, y1=v, line=dict(color="lightgray", width=0.5))
-        for units in self.dense_units_by_dim_.values():
-            for unit in units:
-                dims = unit["dims"]
-                if feature_x_idx not in dims or feature_y_idx not in dims:
-                    continue
-                lox, hix = unit["intervals"][feature_x_idx]
-                loy, hiy = unit["intervals"][feature_y_idx]
-                fig.add_shape(
-                    type="rect", x0=lox, x1=hix, y0=loy, y1=hiy,
-                    fillcolor="orange", opacity=0.25, line=dict(color="darkorange", width=1),
-                )
-        fig.update_layout(
-            title=f"CLIQUE: {names[feature_x_idx]} × {names[feature_y_idx]}",
-            xaxis=dict(range=[-0.02, 1.02]),
-            yaxis=dict(range=[-0.02, 1.02]),
-            width=700, height=600,
-        )
-        return fig
 
     def _build_cell_masks(self, X: np.ndarray) -> None:
         self._cell_masks_ = {}

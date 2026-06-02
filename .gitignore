@@ -29,8 +29,5 @@ models/**/*.pkl
 .DS_Store
 Thumbs.db
 
-# Streamlit
-.streamlit/secrets.toml
-
 # NOTE: processed CSVs (data/processed/, data/raw/*.csv) and results/ are
 # intentionally tracked as deliverables.

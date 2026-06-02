@@ -1,7 +1,7 @@
-"""CLIQUE customer subspace clustering package."""
+"""CLIQUE subspace clustering package."""
 
 from clique.algorithm import CLIQUE, NOISE_LABEL
-from clique.io import apply_log_transform, load_model, save_model, validate_profile_csv
+from clique.io import load_model, save_model
 from clique.metrics import (
     align_predictions,
     clustering_agreement_metrics,
@@ -18,10 +18,8 @@ from clique.metrics import (
 __all__ = [
     "CLIQUE",
     "NOISE_LABEL",
-    "apply_log_transform",
     "load_model",
     "save_model",
-    "validate_profile_csv",
     "compute_silhouette",
     "compute_davies_bouldin",
     "compute_calinski_harabasz",

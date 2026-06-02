@@ -1,34 +1,14 @@
-"""Model persistence and profile CSV validation."""
+"""Model persistence."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import joblib
-import numpy as np
-import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 import config
 from clique.algorithm import CLIQUE
-
-
-def validate_profile_csv(df: pd.DataFrame) -> None:
-    """Raise ValueError if profile CSV does not match DATA_CONTRACT."""
-    missing = [c for c in config.FEATURE_NAMES if c not in df.columns]
-    if missing:
-        raise ValueError(f"Missing feature columns: {missing}")
-    if df[config.FEATURE_NAMES].isna().any().any():
-        raise ValueError("Null values found in feature columns")
-
-
-def apply_log_transform(profiles: pd.DataFrame) -> pd.DataFrame:
-    """Apply log1p to skewed columns (inference on raw-scale profiles)."""
-    out = profiles.copy()
-    for col in config.LOG_TRANSFORM_COLS:
-        if col in out.columns:
-            out[col] = np.log1p(out[col].clip(lower=0))
-    return out
 
 
 def load_model(model_dir: Path | str | None = None) -> tuple[CLIQUE, MinMaxScaler, object]:

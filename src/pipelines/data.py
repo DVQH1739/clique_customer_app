@@ -13,7 +13,6 @@ import pandas as pd
 import config
 
 N_SYNTHETIC = 600
-N_CORRUPTED = 200
 
 SEGMENT_RANGES: list[dict[str, tuple[float, float]]] = [
     {
@@ -70,26 +69,12 @@ def generate_synthetic() -> pd.DataFrame:
     return out[cols]
 
 
-def generate_corrupted(raw: pd.DataFrame) -> pd.DataFrame:
-    """Corrupted subset for upload/error-handling tests in the app."""
-    df = raw.head(N_CORRUPTED).drop(columns=["true_segment", "segment_name"]).copy()
-    df = df.drop(columns=["weekend_ratio", "repeat_category_rate"])
-    df["monetary"] = df["monetary"].astype(object)
-    df.loc[0:9, "monetary"] = "invalid"
-    df.loc[10:19, "frequency"] = np.nan
-    df.loc[20:24, "recency"] = np.nan
-    return df
-
-
 def persist_synthetic() -> None:
-    """Write synthetic raw + corrupted CSVs to ``data/raw/``."""
+    """Write synthetic raw CSV to ``data/raw/``."""
     config.ensure_dirs()
     raw = generate_synthetic()
-    corrupted = generate_corrupted(raw)
     raw.to_csv(config.RAW_CUSTOMERS_CSV, index=False, encoding="utf-8")
-    corrupted.to_csv(config.RAW_CORRUPTED_CSV, index=False, encoding="utf-8")
     print(f"Wrote {config.RAW_CUSTOMERS_CSV} ({len(raw)} rows)")
-    print(f"Wrote {config.RAW_CORRUPTED_CSV} ({len(corrupted)} rows)")
     print("Segment counts:\n", raw["segment_name"].value_counts().to_string())
 
 

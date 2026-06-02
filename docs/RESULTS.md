@@ -106,5 +106,4 @@ Mô hình tách được 3 nhóm khách hàng rõ ràng, mỗi nhóm mang một 
 ### Sản phẩm đầu ra
 - `results/metrics/`: 4 file CSV chỉ số.
 - `results/figures/`: ma trận nhầm lẫn, biểu đồ so sánh, heatmap không gian con, kích thước cụm, biểu đồ lưới.
-- Ứng dụng tra cứu khách hàng: `streamlit run src/app.py`.
-- Chạy lại pipeline: `python src/pipelines/run.py synthetic`.
+- Chạy lại pipeline: `python src/pipelines/run.py synthetic` hoặc `retail`.
