@@ -1,6 +1,6 @@
 subspace,dimensions,n_clusters,coverage
-repeat_category_rate,1,1,0.6429032258064517
-weekend_ratio,1,1,0.6106451612903225
+repeat_category_rate,1,1,0.6435483870967742
+weekend_ratio,1,1,0.6103225806451613
 return_rate,1,1,0.47774193548387095
 return_rate & weekend_ratio,2,1,0.3058064516129032
 frequency,1,2,0.22193548387096773

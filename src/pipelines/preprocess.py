@@ -57,7 +57,7 @@ def plot_feature_distributions(
     out = output_path or config.EDA_DISTRIBUTIONS_PNG
     config.ensure_dirs()
     fig, axes = plt.subplots(2, 8, figsize=(24, 6))
-    fig.suptitle("Phân phối features: Trước (trên) vs Sau transform (dưới)", fontsize=14)
+    fig.suptitle("Feature distributions: before (top) vs after transform (bottom)", fontsize=14)
     for i, col in enumerate(config.FEATURE_NAMES):
         axes[0, i].hist(
             profiles_raw[col], bins=40, color="steelblue", edgecolor="white", linewidth=0.3

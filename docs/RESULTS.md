@@ -73,3 +73,16 @@ Pipeline: winsorize (1–99%) → log1p → MinMaxScaler → grid `(xi, tau)` �
 - `models/` — `clique_model.pkl`, `scaler.pkl`, `profiles.pkl`
 
 Chạy lại: `python src/pipelines/run.py retail`.
+
+---
+
+## 5. Validation (tự động)
+
+Cuối pipeline, `validate.validate_retail_pipeline()` kiểm tra:
+
+- File raw `data/raw/online_retail_ii.xlsx` tồn tại
+- Hợp đồng dữ liệu 8 features, scaled ∈ [0, 1]
+- CLIQUE ≥ 2 cụm, silhouette train khớp `baseline_comparison.csv`
+- Đủ 5 CSV metrics + PNG bắt buộc (EDA, baseline, heatmap, cluster sizes)
+
+Chi tiết: `docs/VALIDATION.md`.

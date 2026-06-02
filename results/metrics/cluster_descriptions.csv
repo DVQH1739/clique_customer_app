@@ -1,6 +1,6 @@
 cluster_id,k_dim,subspace,size,coverage_pct,description,business_label
-5,1,['repeat_category_rate'],1993,64.3,"repeat_category_rate in [0.08, 0.33]",General cluster
-4,1,['weekend_ratio'],1893,61.1,"weekend_ratio in [0.00, 0.08]",General cluster
+5,1,['repeat_category_rate'],1995,64.4,"repeat_category_rate in [0.08, 0.33]",General cluster
+4,1,['weekend_ratio'],1892,61.0,"weekend_ratio in [0.00, 0.08]",General cluster
 3,1,['return_rate'],1481,47.8,"return_rate in [0.00, 0.08]",General cluster
 6,2,"['return_rate', 'weekend_ratio']",948,30.6,"return_rate in [0.00, 0.08] AND weekend_ratio in [0.00, 0.08]",General cluster
 0,1,['frequency'],688,22.2,"frequency in [0.00, 0.08]",General cluster

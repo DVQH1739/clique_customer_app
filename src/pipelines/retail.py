@@ -15,7 +15,7 @@ import pandas as pd
 
 import config
 from clique.algorithm import CLIQUE
-from pipelines import benchmark, data, preprocess, train
+from pipelines import benchmark, data, preprocess, train, validate
 
 
 def run_from_xlsx(
@@ -82,6 +82,11 @@ def run_from_xlsx(
     print(f"  Train sil:  {train_sil:.4f}")
     print(f"  Test sil:   {test_sil:.4f}")
     print(f"  Coverage:   {(model.labels_ >= 0).mean():.1%}" if model.labels_ is not None else "")
+
+    print("\n" + "=" * 70)
+    print("[Retail] Validation")
+    print("=" * 70)
+    validate.validate_retail_pipeline(profiles, model, prep["X_train"])
 
     return {
         "model": model,
