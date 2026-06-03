@@ -20,16 +20,10 @@ seaborn>=0.13
 cd clique_customer_app
 python -m pip install -r requirements.txt
 
-python src/pipelines/run.py retail --objective balanced
+python src/pipelines/run.py retail
 
 # Or explicit path
-python src/pipelines/run.py retail --xlsx data/raw/online_retail_ii.xlsx --objective balanced
-
-# Favor high silhouette (accepts more noise)
-python src/pipelines/run.py retail --objective quality
-
-# Favor higher coverage (accepts lower silhouette)
-python src/pipelines/run.py retail --objective coverage
+python src/pipelines/run.py retail --xlsx data/raw/online_retail_ii.xlsx
 
 # Algorithm smoke test (random 8D data)
 python src/pipelines/run.py verify
@@ -60,10 +54,7 @@ results/
 
 ## Cluster quality (latest)
 
-See `docs/RESULTS.md`. With objective `balanced`, recent selected config is **xi=16, tau=0.20** — train silhouette ~**0.137**, test ~**0.128**, 6 clusters, ~77% coverage.
-For each run, summary + Pareto view are exported to:
-- `results/RUN_SUMMARY.md`
-- `results/figures/pareto_frontier.png`
+See `docs/RESULTS.md`. Selected config: **xi=12, tau=0.18** — train silhouette ~**0.049**, test ~**0.038**, 7 clusters, ~96% coverage.
 
 ## Documentation
 

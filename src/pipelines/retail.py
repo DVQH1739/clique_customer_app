@@ -18,18 +18,11 @@ from clique.algorithm import CLIQUE
 from pipelines import benchmark, data, preprocess, train, validate
 
 
-def _project_to_model_features(X: np.ndarray, model: CLIQUE) -> np.ndarray:
-    names = model.feature_names_ or config.FEATURE_NAMES
-    idx = [config.FEATURE_NAMES.index(f) for f in names]
-    return X[:, idx]
-
-
 def run_from_xlsx(
     xlsx_path: str | Path | None = None,
     *,
     save_artifacts: bool = True,
     do_grid_search: bool = True,
-    selection_objective: str | None = None,
 ) -> dict[str, object]:
     """
     End-to-end retail pipeline from Excel workbook.
@@ -53,17 +46,8 @@ def run_from_xlsx(
     print("\n" + "=" * 70)
     print("[Retail] Train CLIQUE")
     print("=" * 70)
-    train_feature_df = (
-        profiles.assign(CustomerID=profiles["CustomerID"].astype(str))
-        .set_index("CustomerID")
-        .reindex(prep["ids_train"])
-        .reset_index(drop=True)
-    )
     model, cluster_desc, grid = train.run_retail(
-        prep["X_train"],
-        train_feature_df=train_feature_df,
-        selection_objective=selection_objective,
-        do_grid_search=do_grid_search,
+        prep["X_train"], do_grid_search=do_grid_search
     )
 
     print("\n" + "=" * 70)
@@ -71,10 +55,7 @@ def run_from_xlsx(
     print("=" * 70)
     comparison = benchmark.run_retail(model, cluster_desc)
 
-    X_test_model = _project_to_model_features(prep["X_test"], model)
-    X_train_model = _project_to_model_features(prep["X_train"], model)
-
-    test_labels = model.predict(X_test_model)
+    test_labels = model.predict(prep["X_test"])
     test_sil = float("nan")
     mask = test_labels >= 0
     if mask.sum() >= 2 and len(set(test_labels[mask])) >= 2:
@@ -82,7 +63,7 @@ def run_from_xlsx(
 
         test_sil = float(
             silhouette_score(
-                X_test_model[mask],
+                prep["X_test"][mask],
                 test_labels[mask],
                 sample_size=min(500, int(mask.sum())),
                 random_state=config.RANDOM_STATE,
@@ -93,7 +74,7 @@ def run_from_xlsx(
     if model.labels_ is not None:
         from clique.metrics import compute_silhouette
 
-        train_sil = compute_silhouette(X_train_model, model.labels_)
+        train_sil = compute_silhouette(prep["X_train"], model.labels_)
 
     print("\n--- CLUSTER QUALITY SUMMARY ---")
     print(f"  Params:     xi={model.xi}, tau={model.tau}")

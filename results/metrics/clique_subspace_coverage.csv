@@ -1,7 +1,7 @@
 subspace,dimensions,n_clusters,coverage
-weekend_ratio,1,1,0.5883870967741935
-return_rate,1,1,0.47483870967741937
-return_rate & weekend_ratio,2,1,0.3016129032258065
-frequency,1,1,0.22193548387096773
-frequency & weekend_ratio,2,1,0.16548387096774195
-frequency & return_rate,2,1,0.16451612903225807
+repeat_category_rate,1,1,0.6435483870967742
+weekend_ratio,1,1,0.6103225806451613
+return_rate,1,1,0.47774193548387095
+return_rate & weekend_ratio,2,1,0.3058064516129032
+frequency,1,2,0.22193548387096773
+avg_basket,1,1,0.18838709677419355

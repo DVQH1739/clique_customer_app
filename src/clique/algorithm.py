@@ -20,25 +20,11 @@ NOISE_LABEL: int = -1
 class CLIQUE:
     """CLIQUE subspace clustering with Apriori dense-unit discovery."""
 
-    def __init__(
-        self,
-        xi: int = DEFAULT_XI,
-        tau: float = DEFAULT_TAU,
-        *,
-        density_decay: float = 1.0,
-        min_cluster_size_ratio: float = 0.0,
-        redundant_overlap_threshold: float = 0.95,
-    ) -> None:
+    def __init__(self, xi: int = DEFAULT_XI, tau: float = DEFAULT_TAU) -> None:
         assert xi >= 2
         assert 0 < tau < 1
-        assert 0 < density_decay <= 1.0
-        assert 0 <= min_cluster_size_ratio < 1.0
-        assert 0.5 <= redundant_overlap_threshold < 1.0
         self.xi = xi
         self.tau = tau
-        self.density_decay = density_decay
-        self.min_cluster_size_ratio = min_cluster_size_ratio
-        self.redundant_overlap_threshold = redundant_overlap_threshold
 
         self.dense_units_by_dim_: dict[int, list[dict[str, Any]]] = {}
         self.clusters_: list[dict[str, Any]] = []
@@ -52,7 +38,6 @@ class CLIQUE:
         self._feature_names: list[str] | None = None
         self._training_runtime_sec: float | None = None
         self._cell_masks_: dict[tuple[int, int], np.ndarray] = {}
-        self._min_cluster_points_: int = 2
 
     @property
     def dense_units_(self) -> dict[tuple[int, ...], list[dict[str, Any]]]:
@@ -89,14 +74,10 @@ class CLIQUE:
 
         self._build_cell_masks(X)
         threshold = self.tau * self.n_samples_
-        self._min_cluster_points_ = max(
-            2, int(np.ceil(self.min_cluster_size_ratio * self.n_samples_))
-        )
 
         self.dense_units_by_dim_ = {}
         self._phase1_find_dense_units(threshold)
         self._phase2_find_clusters(X)
-        self._prune_redundant_clusters()
         self._phase3_generate_descriptions()
         self._assign_labels()
 
@@ -176,12 +157,11 @@ class CLIQUE:
 
     def _phase1_find_dense_units(self, threshold: float) -> None:
         dense_1d: list[dict[str, Any]] = []
-        threshold_1d = max(2.0, threshold)
         for dim in range(self.n_features_):
             for interval_idx in range(self.xi):
                 lo, hi = interval_idx / self.xi, (interval_idx + 1) / self.xi
                 count = int(self._cell_masks_[(dim, interval_idx)].sum())
-                if count >= threshold_1d:
+                if count >= threshold:
                     dense_1d.append(
                         {
                             "dims": (dim,),
@@ -198,12 +178,11 @@ class CLIQUE:
         while k <= self.n_features_ and prev_dense:
             candidates = self._candidate_generation(prev_dense, k)
             current_dense: list[dict[str, Any]] = []
-            threshold_k = max(2.0, threshold * (self.density_decay ** (k - 1)))
             for cand in candidates:
                 if not self._all_projections_dense(cand, prev_keys):
                     continue
                 count = self._count_unit(cand)
-                if count >= threshold_k:
+                if count >= threshold:
                     cand["count"] = count
                     cand["density"] = count / self.n_samples_
                     current_dense.append(cand)
@@ -267,7 +246,7 @@ class CLIQUE:
             for subspace, units in subspace_map.items():
                 for component in self._bfs_connected_components(units):
                     point_indices = self._get_points_in_component(component)
-                    if len(point_indices) < self._min_cluster_points_:
+                    if len(point_indices) == 0:
                         continue
                     coverage = len(point_indices) / self.n_samples_
                     self.clusters_.append(
@@ -286,56 +265,6 @@ class CLIQUE:
                         self.subspace_coverage_.get(subspace, 0.0), coverage
                     )
                     cluster_id += 1
-
-    def _cluster_jaccard(self, a: np.ndarray, b: np.ndarray) -> float:
-        a_set, b_set = set(a.tolist()), set(b.tolist())
-        if not a_set and not b_set:
-            return 0.0
-        inter = len(a_set & b_set)
-        union = len(a_set | b_set)
-        return inter / union if union else 0.0
-
-    def _prune_redundant_clusters(self) -> None:
-        """
-        Keep higher-dimensional clusters when they heavily overlap lower-dimensional ones.
-
-        This prevents broad 1D clusters from drowning out clearer higher-k subspace structure.
-        """
-        if not self.clusters_:
-            return
-        ordered = sorted(
-            self.clusters_,
-            key=lambda c: (c.get("k", len(c["subspace"])), c["size"]),
-            reverse=True,
-        )
-        kept: list[dict[str, Any]] = []
-        for cluster in ordered:
-            redundant = False
-            for ref in kept:
-                if ref.get("k", len(ref["subspace"])) <= cluster.get(
-                    "k", len(cluster["subspace"])
-                ):
-                    continue
-                ov = self._cluster_jaccard(cluster["points_idx"], ref["points_idx"])
-                if ov >= self.redundant_overlap_threshold:
-                    redundant = True
-                    break
-            if not redundant:
-                kept.append(cluster)
-
-        # Re-index ids and recompute subspace coverage after pruning.
-        self.clusters_ = kept
-        for cid, cluster in enumerate(self.clusters_):
-            cluster["id"] = cid
-            cluster["k"] = cluster.get("k", len(cluster["subspace"]))
-            cluster["coverage"] = len(cluster["points_idx"]) / self.n_samples_
-
-        self.subspace_coverage_ = {}
-        for cluster in self.clusters_:
-            sp = cluster["subspace"]
-            self.subspace_coverage_[sp] = max(
-                self.subspace_coverage_.get(sp, 0.0), cluster["coverage"]
-            )
 
     def _units_are_adjacent(self, u1: dict[str, Any], u2: dict[str, Any]) -> bool:
         if u1["dims"] != u2["dims"]:

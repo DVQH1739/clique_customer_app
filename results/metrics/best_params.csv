@@ -1,2 +1,0 @@
-selection_rule,feature_set,xi,tau,n_clusters,n_noise,coverage,runtime_sec,silhouette,davies_bouldin,calinski_harabasz,quality_score
-objective=quality,frequency|return_rate|weekend_ratio,16,0.2,6,707,0.772,0.0,0.3456,1.0788,1006.0,0.20229600000000003

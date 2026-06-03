@@ -40,42 +40,40 @@ from sklearn.metrics import (
 # Intrinsic metrics (no ground truth)
 # ---------------------------------------------------------------------------
 
-def _valid_cluster_view(X: np.ndarray, labels: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Return X/labels with noise (-1) removed."""
-    labels = np.asarray(labels)
-    mask = labels >= 0
-    return X[mask], labels[mask]
-
-
 def compute_silhouette(X: np.ndarray, labels: np.ndarray) -> float:
     """Silhouette score over non-noise points; NaN if fewer than 2 clusters."""
-    Xv, lv = _valid_cluster_view(X, labels)
-    if len(Xv) < 2 or len(set(lv.tolist())) < 2:
+    labels = np.asarray(labels)
+    if len(set(labels) - {-1}) < 2:
+        return float("nan")
+    mask = labels >= 0
+    if mask.sum() < 2:
         return float("nan")
     try:
-        return float(silhouette_score(Xv, lv))
+        return float(silhouette_score(X[mask], labels[mask]))
     except Exception:
         return float("nan")
 
 
 def compute_davies_bouldin(X: np.ndarray, labels: np.ndarray) -> float:
     """Davies-Bouldin index (lower is better); NaN if fewer than 2 clusters."""
-    Xv, lv = _valid_cluster_view(X, labels)
-    if len(Xv) < 2 or len(set(lv.tolist())) < 2:
+    labels = np.asarray(labels)
+    if len(set(labels) - {-1}) < 2:
         return float("nan")
+    mask = labels >= 0
     try:
-        return float(davies_bouldin_score(Xv, lv))
+        return float(davies_bouldin_score(X[mask], labels[mask]))
     except Exception:
         return float("nan")
 
 
 def compute_calinski_harabasz(X: np.ndarray, labels: np.ndarray) -> float:
     """Calinski-Harabasz index (higher is better); NaN if fewer than 2 clusters."""
-    Xv, lv = _valid_cluster_view(X, labels)
-    if len(Xv) < 2 or len(set(lv.tolist())) < 2:
+    labels = np.asarray(labels)
+    if len(set(labels) - {-1}) < 2:
         return float("nan")
+    mask = labels >= 0
     try:
-        return float(calinski_harabasz_score(Xv, lv))
+        return float(calinski_harabasz_score(X[mask], labels[mask]))
     except Exception:
         return float("nan")
 

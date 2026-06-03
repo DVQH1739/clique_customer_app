@@ -15,12 +15,6 @@ import config
 from clique.algorithm import CLIQUE
 
 
-def _project_to_model_features(X: np.ndarray, model: CLIQUE) -> np.ndarray:
-    names = model.feature_names_ or config.FEATURE_NAMES
-    idx = [config.FEATURE_NAMES.index(f) for f in names]
-    return X[:, idx]
-
-
 def validate_profiles(profiles: pd.DataFrame) -> None:
     missing = set(config.FEATURE_NAMES) - set(profiles.columns)
     if missing:
@@ -53,10 +47,9 @@ def validate_model(model: CLIQUE, X_train: np.ndarray) -> None:
     n_cl = len(set(model.labels_.tolist()) - {-1})
     if n_cl < 2:
         raise ValueError("Fewer than 2 non-noise clusters")
-    X_train_model = _project_to_model_features(X_train, model)
     mask = model.labels_ >= 0
     if mask.sum() >= 2 and n_cl >= 2:
-        sil = silhouette_score(X_train_model[mask], model.labels_[mask])
+        sil = silhouette_score(X_train[mask], model.labels_[mask])
         if sil < -0.15:
             raise ValueError(f"Train silhouette unusually low: {sil:.4f}")
 
@@ -64,7 +57,6 @@ def validate_model(model: CLIQUE, X_train: np.ndarray) -> None:
 def validate_metrics_artifacts(model: CLIQUE, X_train: np.ndarray) -> None:
     required_csv = [
         config.GRID_SEARCH_CSV,
-        config.BEST_PARAMS_CSV,
         config.BASELINE_COMPARISON_CSV,
         config.CLUSTER_DESCRIPTIONS_CSV,
         config.TEST_PREDICTIONS_CSV,
@@ -80,9 +72,8 @@ def validate_metrics_artifacts(model: CLIQUE, X_train: np.ndarray) -> None:
 
     base = pd.read_csv(config.BASELINE_COMPARISON_CSV)
     cl = base[base["algorithm"] == "CLIQUE"].iloc[0]
-    X_train_model = _project_to_model_features(X_train, model)
     mask = model.labels_ >= 0
-    sil = silhouette_score(X_train_model[mask], model.labels_[mask])
+    sil = silhouette_score(X_train[mask], model.labels_[mask])
     if abs(sil - float(cl["silhouette"])) > 0.01:
         raise ValueError(
             f"CLIQUE silhouette mismatch: model={sil:.4f} csv={cl['silhouette']:.4f}"
@@ -97,7 +88,6 @@ def validate_metrics_artifacts(model: CLIQUE, X_train: np.ndarray) -> None:
         config.BASELINE_COMPARISON_PNG,
         config.FIGURES_DIR / "subspace_heatmap.png",
         config.FIGURES_DIR / "cluster_sizes.png",
-        config.PARETO_FRONTIER_PNG,
     ]
     for p in required_png:
         if not p.exists() or p.stat().st_size < 1000:

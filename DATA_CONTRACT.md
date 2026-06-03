@@ -48,7 +48,6 @@ xlsx → clean → profiles → winsorize → log1p → split → MinMaxScaler �
 | CSV | Content |
 |-----|---------|
 | `metrics/retail_grid_search.csv` | Grid over xi, tau |
-| `metrics/best_params.csv` | Selected params for the current objective |
 | `metrics/baseline_comparison.csv` | CLIQUE vs baselines (train) |
 | `metrics/cluster_descriptions.csv` | Subspace descriptions |
 | `metrics/test_predictions.csv` | Test cluster assignments |
@@ -60,5 +59,4 @@ xlsx → clean → profiles → winsorize → log1p → split → MinMaxScaler �
 | `figures/baseline_comparison.png` | Silhouette / DB / CH bars |
 | `figures/subspace_heatmap.png` | 2D subspace cluster counts |
 | `figures/cluster_sizes.png` | Cluster sizes |
-| `figures/pareto_frontier.png` | Coverage vs silhouette trade-off |
 | `figures/grid_*.png` | Top 2D dense-unit grids |

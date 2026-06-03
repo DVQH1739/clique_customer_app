@@ -17,8 +17,8 @@ Automated checks run at the end of `retail.run_from_xlsx()` (`pipelines/validate
 ## CLIQUE algorithm
 
 - [x] Apriori dense units: threshold `tau × n_samples`
-- [x] Grid `xi ∈ {8,10,12,14,16}`, `tau ∈ {0.06…0.20}`
-- [x] Selection objective supported: `quality` / `balanced` / `coverage`
+- [x] Grid `xi ∈ {8,10,12}`, `tau ∈ {0.10…0.18}`
+- [x] Selection: positive silhouette when possible, else composite `quality_score`
 - [x] At least 2 non-noise clusters after fit
 
 ## Metrics
@@ -29,7 +29,7 @@ Automated checks run at the end of `retail.run_from_xlsx()` (`pipelines/validate
 
 ## Artifacts
 
-- [x] 6 metrics CSVs non-empty (includes `best_params.csv`)
-- [x] EDA, baseline comparison, subspace heatmap, cluster sizes, pareto PNGs present
+- [x] 5 metrics CSVs non-empty
+- [x] EDA, baseline comparison, subspace heatmap, cluster sizes PNGs present
 
 Manual review: open `docs/RESULTS.md` and `results/figures/` after each full run.

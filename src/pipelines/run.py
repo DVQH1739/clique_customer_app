@@ -100,22 +100,13 @@ def verify_clique() -> None:
 
 
 
-def pipeline_retail(
-    xlsx: str | None = None,
-    steps: set[str] | None = None,
-    objective: str | None = None,
-) -> None:
+def pipeline_retail(xlsx: str | None = None, steps: set[str] | None = None) -> None:
 
     """Retail pipeline from ``online_retail_ii.xlsx`` (in-memory; CSV is cache only)."""
 
     if steps is None:
 
-        retail.run_from_xlsx(
-            xlsx,
-            save_artifacts=True,
-            do_grid_search=True,
-            selection_objective=objective,
-        )
+        retail.run_from_xlsx(xlsx, save_artifacts=True, do_grid_search=True)
 
         return
 
@@ -167,9 +158,7 @@ def pipeline_retail(
 
             X_train = prep["X_train"]
 
-        model, cluster_desc, _ = train.run_retail(
-            X_train, selection_objective=objective
-        )
+        model, cluster_desc, _ = train.run_retail(X_train)
 
     if "benchmark" in steps:
 
@@ -237,14 +226,6 @@ def main() -> None:
 
     )
 
-    parser.add_argument(
-        "--objective",
-        type=str,
-        default=config.SELECTION_OBJECTIVE,
-        choices=["quality", "balanced", "coverage"],
-        help="Grid-search selection objective for best CLIQUE params",
-    )
-
     args = parser.parse_args()
 
     steps = set(args.step) if args.step else None
@@ -257,7 +238,7 @@ def main() -> None:
 
     else:
 
-        pipeline_retail(args.xlsx, steps, args.objective)
+        pipeline_retail(args.xlsx, steps)
 
 
 
