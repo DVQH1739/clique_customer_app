@@ -13,6 +13,10 @@ nbformat>=5.9
 matplotlib>=3.8
 seaborn>=0.13
 ```
+## Dataset
+Raw Data `online_retail_ii.xlsx` stored at Google Drive. Download via link:
+*  **Link:** [Google Drive Dataset](https://docs.google.com/spreadsheets/d/19TReeHDy3gCXYNSzUevT9jeN9JBddedo/edit?gid=1630862673#gid=1630862673)
+* Folder: `data/raw/`
 
 ## Quick start
 
